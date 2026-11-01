@@ -163,6 +163,7 @@ const themes = [
   { value: "system", label: "跟随系统", description: "自动切换", icon: IconDeviceDesktop },
 ];
 const colors = [
+  { value: "#3fcfa6", label: "Carefree 青" },
   { value: "#409eff", label: "天空蓝" },
   { value: "#6366f1", label: "鸢尾紫" },
   { value: "#a855f7", label: "薰衣紫" },

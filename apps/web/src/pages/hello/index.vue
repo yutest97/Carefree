@@ -82,7 +82,9 @@ async function completeSetup() {
   grid-template-columns: 1fr 1fr;
   min-height: 100svh;
   padding: 8px;
-  background: var(--el-bg-color);
+  background:
+    radial-gradient(70% 55% at 2% 100%, color-mix(in srgb, var(--el-color-primary) 12%, transparent), transparent 70%),
+    linear-gradient(180deg, color-mix(in srgb, var(--el-bg-color) 94%, #f7eeda), var(--el-bg-color));
   color: var(--el-text-color-primary);
   font-family: "Inter", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
 
@@ -136,9 +138,9 @@ async function completeSetup() {
       h1 {
         margin: 0 0 12px;
         font-size: clamp(32px, 3.4vw, 40px);
-        font-weight: 650;
+        font-weight: 700;
         line-height: 1.35;
-        letter-spacing: -0.8px;
+        letter-spacing: -1px;
       }
 
       .description {
@@ -160,9 +162,13 @@ async function completeSetup() {
         min-height: 50px;
         padding: 12px;
         white-space: normal;
+        border: 0;
         border-radius: calc(var(--ui-radius) * 1.625);
+        background: linear-gradient(135deg, color-mix(in srgb, var(--el-color-primary) 88%, #fff), color-mix(in srgb, var(--el-color-primary) 62%, #0b4a3f));
+        color: #fff;
         font-size: 16px;
         font-weight: 600;
+        box-shadow: 0 12px 28px color-mix(in srgb, var(--el-color-primary) 26%, transparent);
       }
 
       .secondaryActions {
@@ -222,8 +228,8 @@ async function completeSetup() {
     padding: 28px;
     border-radius: calc(var(--ui-radius) * 1.125);
     overflow: hidden;
-    background: radial-gradient(ellipse at 76% 82%, #f3dcb1 0%, transparent 46%), radial-gradient(ellipse at 25% 52%, #667ab5 0%, transparent 52%),
-      radial-gradient(ellipse at 90% 18%, #369889 0%, transparent 48%), linear-gradient(145deg, #123f38, #467f72 48%, #a8c9ad);
+    background: radial-gradient(ellipse at 78% 84%, #ffd9a8 0%, transparent 46%), radial-gradient(ellipse at 18% 16%, #3fcfa6 0%, transparent 52%),
+      radial-gradient(ellipse at 92% 10%, #0e6b5a 0%, transparent 50%), linear-gradient(145deg, #0e6b5a, #2e9e86 52%, #c9e8d8);
 
     .artBg {
       z-index: 0;

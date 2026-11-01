@@ -4,5 +4,5 @@ export default createNodeConfig({
   name: "characterNode",
   displayName: "角色卡",
   author: "Carefree",
-  github: "https://github.com/HBAI-Ltd/Carefree-app",
+  github: "https://github.com/yutest97/Carefree",
 }, import.meta.url);

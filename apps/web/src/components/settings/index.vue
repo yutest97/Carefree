@@ -2,6 +2,10 @@
   <el-dialog v-model="visible" title="设置" width="min(1080px, calc(100vw - 32px))" alignCenter appendToBody>
     <div class="settings">
       <aside class="sidebar" aria-label="设置分类">
+        <div class="settingsBrand" aria-hidden="true">
+          <img :src="logoUrl" alt="" />
+          <span>Carefree</span>
+        </div>
         <template v-for="item in settingsPanels" :key="item.id">
           <h3 v-if="item.groupLabel" class="settingsGroupLabel">{{ item.groupLabel }}</h3>
           <button
@@ -36,6 +40,7 @@
 <script setup lang="ts">
 import { defineAsyncComponent, shallowRef } from "vue";
 import { hasDesktopUpdate } from "@/stores/desktopUpdate";
+import logoUrl from "@toonflow/assets/logo.svg";
 import {
   IconPalette,
   IconSettings,
@@ -89,6 +94,33 @@ const visible = defineModel<boolean>({ default: false });
     overflow-y: auto;
     padding: 2px;
 
+    .settingsBrand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 2px 10px 12px;
+      margin-bottom: 2px;
+      border-bottom: 1px solid color-mix(in srgb, var(--el-color-primary) 12%, var(--el-border-color-lighter));
+
+      img {
+        width: 26px;
+        height: 26px;
+        flex-shrink: 0;
+        border-radius: 8px;
+      }
+
+      span {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: var(--el-text-color-primary);
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+      }
+    }
+
     .settingsGroupLabel {
       margin: 14px 12px 6px;
       color: var(--el-text-color-secondary);
@@ -123,12 +155,13 @@ const visible = defineModel<boolean>({ default: false });
       }
 
       &:hover {
-        background: var(--el-fill-color-light);
+        background: color-mix(in srgb, var(--el-color-primary) 6%, transparent);
       }
 
       &[aria-pressed="true"] {
-        background: var(--el-color-primary-light-9);
+        background: linear-gradient(90deg, color-mix(in srgb, var(--el-color-primary) 16%, transparent), color-mix(in srgb, var(--el-color-primary) 5%, transparent));
         color: var(--el-color-primary);
+        box-shadow: inset 2px 0 0 var(--el-color-primary);
       }
 
       &:focus-visible {
@@ -171,6 +204,13 @@ const visible = defineModel<boolean>({ default: false });
     grid-template-columns: 44px minmax(0, 1fr);
 
     .sidebar {
+      .settingsBrand {
+        justify-content: center;
+        padding: 2px 0 10px;
+
+        span { display: none; }
+      }
+
       .settingsGroupLabel {
         margin: 12px 0 6px;
         text-align: center;

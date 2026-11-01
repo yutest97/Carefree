@@ -4,9 +4,96 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Carefree</title>
+    <style>
+      #boot {
+        position: fixed;
+        inset: 0;
+        z-index: 2147483647;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+        background:
+          radial-gradient(60% 50% at 0% 0%, #3fcfa61f, transparent 65%),
+          radial-gradient(50% 45% at 100% 100%, #ffb86b1a, transparent 65%),
+          #fbf8f1;
+        color: #0e6b5a;
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+        transition: opacity 320ms ease, visibility 320ms ease;
+      }
+      #boot.bootDone {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+      #boot .bootMark {
+        width: 96px;
+        height: 96px;
+        border-radius: 24px;
+        animation: bootIn 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
+        box-shadow: 0 18px 40px #0e6b5a2e;
+      }
+      #boot .bootWord {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+        letter-spacing: 0.22em;
+        text-indent: 0.22em;
+        animation: bootFade 600ms ease 120ms both;
+      }
+      #boot .bootTip {
+        margin: 0;
+        color: #55736d;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        animation: bootFade 600ms ease 220ms both;
+      }
+      @keyframes bootIn {
+        from { opacity: 0; transform: scale(0.9); }
+        to { opacity: 1; transform: scale(1); }
+      }
+      @keyframes bootFade {
+        from { opacity: 0; transform: translateY(6px); }
+        to { opacity: 1; transform: none; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #boot .bootMark, #boot .bootWord, #boot .bootTip { animation: none; }
+      }
+    </style>
   </head>
   <body>
+    <div id="boot" role="status" aria-label="Carefree 正在启动">
+      <svg class="bootMark" viewBox="0 0 1024 1024" aria-hidden="true">
+        <defs>
+          <linearGradient id="bootBg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#3FCFA6" />
+            <stop offset="1" stop-color="#0E6B5A" />
+          </linearGradient>
+        </defs>
+        <rect width="1024" height="1024" rx="232" ry="232" fill="url(#bootBg)" />
+        <path d="M 640.6 358.8 A 200 200 0 1 0 640.6 665.2" fill="none" stroke="#FFF4DC" stroke-width="84" stroke-linecap="round" />
+        <circle cx="714" cy="512" r="54" fill="#FFB86B" />
+      </svg>
+      <p class="bootWord">Carefree</p>
+      <p class="bootTip">AI 短剧与漫剧创作</p>
+    </div>
     <div id="app"></div>
+    <script>
+      (function () {
+        var app = document.getElementById("app");
+        var boot = document.getElementById("boot");
+        function done() {
+          if (!boot || boot.classList.contains("bootDone")) return;
+          boot.classList.add("bootDone");
+          setTimeout(function () { boot.remove(); }, 400);
+        }
+        new MutationObserver(function (_records, observer) {
+          if (app.children.length) { observer.disconnect(); done(); }
+        }).observe(app, { childList: true });
+        setTimeout(done, 8000);
+      })();
+    </script>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

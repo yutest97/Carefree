@@ -84,8 +84,8 @@ export async function readAsset(path: string): Promise<{ blob: Blob; mimeType: s
   return { blob, mimeType };
 }
 
-export async function saveAsset(path: string, content: Blob) {
-  const response = await fetch(`/api/assets/save?path=${encodeURIComponent(path)}`, {
+export async function saveAsset(path: string, content: Blob, overwrite = false) {
+  const response = await fetch(`/api/assets/save?path=${encodeURIComponent(path)}${overwrite ? "&overwrite=true" : ""}`, {
     method: "PUT",
     headers: { "Content-Type": "application/octet-stream" },
     body: content,

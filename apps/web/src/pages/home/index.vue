@@ -472,7 +472,9 @@ async function createProject(fromPrompt = true) {
   height: 100dvh;
   overflow: hidden;
   color: var(--el-text-color-primary);
-  background: color-mix(in srgb, var(--el-bg-color) 96%, var(--el-text-color-primary));
+  background:
+    radial-gradient(90% 60% at 82% -12%, color-mix(in srgb, var(--el-color-primary) 16%, transparent), transparent 62%),
+    linear-gradient(180deg, color-mix(in srgb, var(--el-bg-color) 92%, #f7eeda), var(--el-bg-color));
 
   .pageBackground {
     position: absolute;
@@ -522,7 +524,7 @@ async function createProject(fromPrompt = true) {
     padding: 20px 12px 16px;
     overflow-x: hidden;
     overflow-y: auto;
-    border-inline-end: 1px solid var(--el-border-color-lighter);
+    border-inline-end: 1px solid color-mix(in srgb, var(--el-color-primary) 14%, var(--el-border-color-lighter));
     background: inherit;
     transition: flex-basis var(--sidebarMotion) ease, width var(--sidebarMotion) ease;
 
@@ -555,8 +557,8 @@ async function createProject(fromPrompt = true) {
           max-width: 150px;
           overflow: hidden;
           font-size: 20px;
-          font-weight: 600;
-          letter-spacing: -0.5px;
+          font-weight: 700;
+          letter-spacing: -0.2px;
           white-space: nowrap;
           transition: max-width var(--sidebarMotion) ease, opacity var(--sidebarFade) ease;
         }
@@ -637,7 +639,12 @@ async function createProject(fromPrompt = true) {
       &:hover:not(:disabled) { background: var(--el-fill-color); color: var(--el-text-color-primary); }
       &:focus-visible { outline: 2px solid var(--el-color-primary); outline-offset: 2px; }
       &:disabled { cursor: wait; opacity: 0.6; }
-      &.active { background: var(--el-fill-color-darker); color: var(--el-text-color-primary); font-weight: 500; }
+      &.active {
+        background: color-mix(in srgb, var(--el-color-primary) 13%, transparent);
+        color: var(--el-text-color-primary);
+        font-weight: 500;
+        box-shadow: inset 2px 0 0 var(--el-color-primary);
+      }
       &.connected { color: var(--el-color-success); }
     }
 
@@ -687,9 +694,9 @@ async function createProject(fromPrompt = true) {
             h1 {
               margin: 0;
               font-size: clamp(22px, 3vw, 34px);
-              font-weight: 500;
+              font-weight: 600;
               line-height: 1.3;
-              letter-spacing: -0.5px;
+              letter-spacing: -0.8px;
             }
           }
 
@@ -699,14 +706,14 @@ async function createProject(fromPrompt = true) {
             .promptCard {
               position: relative;
               border-radius: calc(var(--ui-radius) * 3);
-              border-color: var(--el-border-color-light);
-              background: color-mix(in srgb, var(--el-bg-color-overlay) 70%, transparent);
-              box-shadow: 0 12px 36px rgb(0 0 0 / 6%), inset 0 1px 0 color-mix(in srgb, var(--el-text-color-primary) 4%, transparent);
+              border-color: color-mix(in srgb, var(--el-color-primary) 18%, var(--el-border-color-lighter));
+              background: color-mix(in srgb, var(--el-bg-color-overlay) 82%, transparent);
+              box-shadow: 0 18px 50px color-mix(in srgb, var(--el-color-primary) 12%, transparent), inset 0 1px 0 color-mix(in srgb, var(--el-text-color-primary) 4%, transparent);
               transition: border-color 0.2s, box-shadow 0.2s;
 
               &:focus-within, &.draggingAttachments {
-                border-color: var(--el-color-primary-light-5);
-                box-shadow: 0 12px 36px rgb(0 0 0 / 6%), 0 0 0 3px color-mix(in srgb, var(--el-color-primary) 8%, transparent);
+                border-color: color-mix(in srgb, var(--el-color-primary) 52%, var(--el-border-color-lighter));
+                box-shadow: 0 18px 50px color-mix(in srgb, var(--el-color-primary) 18%, transparent), 0 0 0 3px color-mix(in srgb, var(--el-color-primary) 12%, transparent);
               }
 
               :deep(.el-card__body) {
@@ -811,8 +818,13 @@ async function createProject(fromPrompt = true) {
                     flex-shrink: 0;
                     height: 38px;
                     margin: 0;
+                    border: 0;
                     border-radius: calc(var(--ui-radius) * 2);
+                    background: linear-gradient(135deg, color-mix(in srgb, var(--el-color-primary) 88%, #fff), color-mix(in srgb, var(--el-color-primary) 62%, #0b4a3f));
+                    color: #fff;
+                    box-shadow: 0 8px 20px color-mix(in srgb, var(--el-color-primary) 28%, transparent);
 
+                    &:hover:not(:disabled) { filter: brightness(1.06); }
                     &.is-circle { width: 38px; border-radius: 50%; }
                   }
                 }
@@ -866,9 +878,21 @@ async function createProject(fromPrompt = true) {
               border-color: var(--el-border-color-lighter);
               background: color-mix(in srgb, var(--el-bg-color-overlay) 70%, transparent);
               box-shadow: var(--el-box-shadow-lighter);
+              transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+
+              &:hover {
+                transform: translateY(-2px);
+                border-color: color-mix(in srgb, var(--el-color-primary) 38%, var(--el-border-color-lighter));
+                box-shadow: 0 14px 34px color-mix(in srgb, var(--el-color-primary) 16%, transparent);
+              }
 
               &:focus-within {
                 border-color: var(--el-color-primary-light-5);
+              }
+
+              @media (prefers-reduced-motion: reduce) {
+                transition: none;
+                &:hover { transform: none; }
               }
 
               .projectLaunch, .projectEntry {

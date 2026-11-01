@@ -62,7 +62,7 @@
           :error="nodeErrors[type]"
           :loading="nodeLoads.has(type) || (nodeListLoading && !nodeTypes[type] && !nodeErrors[type])" />
       </template>
-      <background v-if="canvasId" :gap="16" patternColor="var(--el-border-color)" />
+      <background v-if="canvasId" :gap="16" patternColor="var(--el-color-primary-light-7)" />
       <div v-if="!canvasId" class="canvasOverlay" role="status" @contextmenu.prevent @dragover.prevent @drop.prevent>
         从左上角打开一个画布，就可以开始创作啦
       </div>
@@ -1307,6 +1307,9 @@ const defaultEdgeOptions = markRaw({
 .canvas {
   width: 100%;
   height: 100%;
+  background:
+    radial-gradient(70% 55% at 0% 0%, color-mix(in srgb, var(--el-color-primary) 8%, transparent), transparent 68%),
+    radial-gradient(60% 45% at 100% 100%, color-mix(in srgb, #ffb86b 6%, transparent), transparent 70%);
 
   &.canvasUnselected :deep(.vue-flow__viewport) {
     visibility: hidden;

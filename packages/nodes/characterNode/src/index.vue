@@ -220,7 +220,7 @@ async function importReferences(items: CharacterReference[]) {
   for (const [index, item] of items.entries()) {
     const { blob, mimeType } = await readAsset(item.path);
     const target = `${directory}/${index}${extensionForMimeType(mimeType)}`;
-    await workspace.write(target, blob, true);
+    await workspace.write(target, blob);
     imported.push({ path: target, mimeType });
   }
   return imported;
@@ -277,7 +277,7 @@ async function saveCharacter() {
       const bytes = await workspace.read(item.path);
       const mimeType = item.mimeType || mimeTypeFromPath(item.path) || "image/png";
       const target = `characters/${characterId}/ref-${index}${extensionForMimeType(mimeType)}`;
-      await saveAsset(target, new Blob([bytes], { type: mimeType }));
+      await saveAsset(target, new Blob([bytes], { type: mimeType }), true);
       stored.push({ path: target, mimeType });
     }
     const record = normalizeCharacter({
@@ -289,7 +289,7 @@ async function saveCharacter() {
       references: stored,
       updatedAt: new Date().toISOString(),
     }, `characters/${characterId}.json`);
-    await saveAsset(`characters/${characterId}.json`, new Blob([JSON.stringify(record, null, 2)], { type: "application/json" }));
+    await saveAsset(`characters/${characterId}.json`, new Blob([JSON.stringify(record, null, 2)], { type: "application/json" }), true);
     data.value.characterPath = `characters/${characterId}.json`;
     selectedPath.value = data.value.characterPath;
     await refreshCharacters();
@@ -311,6 +311,8 @@ async function deleteCharacter() {
   saving.value = true;
   try {
     const characterId = path.match(/^characters\/([^/]+)\.json$/)?.[1];
+    const record = await readCharacter(path).catch(() => undefined);
+    for (const reference of record?.references ?? []) await removeAsset(reference.path).catch(() => {});
     await removeAsset(path);
     if (characterId) await removeAsset(`characters/${characterId}`).catch(() => {});
     data.value.characterPath = "";

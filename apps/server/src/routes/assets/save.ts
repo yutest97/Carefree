@@ -6,10 +6,10 @@ import { success } from "@/lib/responseFormat";
 
 const router = Router();
 
-export default router.put("/", validateFields({ path: z.string().min(1).max(4096) }, "query"), async (req, res) => {
+export default router.put("/", validateFields({ path: z.string().min(1).max(4096), overwrite: z.literal("true").optional() }, "query"), async (req, res) => {
   if (!req.is("application/octet-stream") || (req.body !== undefined && !Buffer.isBuffer(req.body))) {
     throw Object.assign(new Error("请发送文件原始内容"), { status: 400 });
   }
-  await u.assets.writeAssetFile(req.query.path as string, req.body ?? Buffer.alloc(0));
+  await u.assets.writeAssetFile(req.query.path as string, req.body ?? Buffer.alloc(0), undefined, req.query.overwrite === "true");
   res.json(success());
 });

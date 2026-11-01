@@ -47,7 +47,7 @@ export async function readAssetFile(path: string, signal?: AbortSignal) {
   } finally { release(); }
 }
 
-export async function writeAssetFile(path: string, content: string | Uint8Array, revision?: string) {
+export async function writeAssetFile(path: string, content: string | Uint8Array, revision?: string, overwrite = false) {
   if (Buffer.byteLength(content) > maxAssetBytes) throw new Error("素材文件不能超过 100 MB");
   const target = await resolveAssetPath(path);
   const release = lockWorkspaceFiles([target.path]);
@@ -56,7 +56,7 @@ export async function writeAssetFile(path: string, content: string | Uint8Array,
       const current = createHash("sha256").update(await readAssetContents(target.path)).digest("hex");
       if (current !== revision) throw Object.assign(new Error("素材已被修改，请重新读取后再更新"), { status: 409, code: "ESTALE" });
     }
-    await writeWorkspaceFile(target.path, content, revision === undefined);
+    await writeWorkspaceFile(target.path, content, revision === undefined && !overwrite);
     return { path: relative(target.directory, target.path).split(sep).join("/"), revision: createHash("sha256").update(content).digest("hex") };
   } finally { release(); }
 }

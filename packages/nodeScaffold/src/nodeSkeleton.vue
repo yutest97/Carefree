@@ -762,6 +762,7 @@ watch(
 
     .titleIcon {
       flex-shrink: 0;
+      color: var(--el-color-primary);
     }
 
     .labelText {
@@ -836,8 +837,15 @@ watch(
       &:focus-visible { opacity: 1; }
     }
 
+    .contentCard {
+      border-color: color-mix(in srgb, var(--el-color-primary) 12%, var(--el-border-color-lighter));
+      background: color-mix(in srgb, var(--el-bg-color-overlay) 96%, var(--el-color-primary));
+      box-shadow: 0 10px 24px color-mix(in srgb, var(--el-color-primary) 8%, transparent);
+    }
+
     .contentCard.selected {
-      border-color: color-mix(in srgb, var(--el-color-primary) 50%, var(--el-border-color-light));
+      border-color: color-mix(in srgb, var(--el-color-primary) 58%, var(--el-border-color-light));
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--el-color-primary) 16%, transparent), 0 12px 28px color-mix(in srgb, var(--el-color-primary) 12%, transparent);
     }
 
     .contentCard .loadingContent {

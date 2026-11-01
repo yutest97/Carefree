@@ -256,6 +256,46 @@ input[inputmode="decimal"],
   }
 }
 
+// Carefree 品牌化的通用弹层与反馈组件。
+.el-dialog {
+  border: 1px solid color-mix(in srgb, var(--el-color-primary) 10%, var(--el-border-color-lighter));
+  border-radius: var(--ui-radius-large);
+  box-shadow: 0 28px 64px color-mix(in srgb, var(--el-color-primary) 14%, transparent), var(--el-box-shadow-dark);
+}
+
+.el-dialog__header {
+  padding-bottom: 12px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid color-mix(in srgb, var(--el-color-primary) 10%, var(--el-border-color-lighter));
+}
+
+.el-dialog__title {
+  font-weight: 600;
+}
+
+.el-message-box {
+  border: 1px solid color-mix(in srgb, var(--el-color-primary) 10%, var(--el-border-color-lighter));
+  border-radius: var(--ui-radius-large);
+  box-shadow: 0 24px 56px color-mix(in srgb, var(--el-color-primary) 12%, transparent), var(--el-box-shadow-dark);
+}
+
+.el-message {
+  border-color: color-mix(in srgb, var(--el-color-primary) 18%, var(--el-border-color-lighter));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--el-bg-color-overlay) 92%, var(--el-color-primary));
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--el-color-primary) 12%, transparent);
+}
+
+.el-dropdown__popper.el-popper,
+.el-select__popper.el-popper,
+.el-popover.el-popper {
+  border-radius: var(--ui-radius-base);
+}
+
+.el-overlay {
+  backdrop-filter: blur(3px);
+}
+
 .vue-flow {
   --vf-node-bg: var(--el-bg-color-overlay);
   --vf-node-text: var(--el-text-color-primary);

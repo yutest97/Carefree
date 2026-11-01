@@ -366,7 +366,10 @@ function saveDocumentNode(directory: string, canvasPath: string, nodeId: string,
   position: relative;
   width: 100%;
   height: 100dvh;
-  background-color: var(--el-bg-color);
+  background:
+    radial-gradient(60% 55% at 0% 0%, color-mix(in srgb, var(--el-color-primary) 9%, transparent), transparent 65%),
+    radial-gradient(50% 45% at 100% 100%, color-mix(in srgb, #ffb86b 7%, transparent), transparent 65%),
+    var(--el-bg-color);
 
   :deep(.workspaceMenu > .el-card),
   :deep(.canvasMenu),
@@ -376,7 +379,7 @@ function saveDocumentNode(directory: string, canvasPath: string, nodeId: string,
   .toolMenu {
     background: color-mix(in srgb, var(--el-bg-color-overlay) 70%, transparent);
     backdrop-filter: blur(6px);
-    border-color: var(--el-border-color-light);
+    border-color: color-mix(in srgb, var(--el-color-primary) 12%, var(--el-border-color-light));
     box-shadow: var(--el-box-shadow-light);
   }
 
@@ -419,7 +422,7 @@ function saveDocumentNode(directory: string, canvasPath: string, nodeId: string,
       z-index: 5;
       min-height: 28px;
       padding: 2px;
-      border: 1px solid var(--el-border-color-light);
+      border: 1px solid color-mix(in srgb, var(--el-color-primary) 16%, var(--el-border-color-light));
       font-size: 12px;
       transform: translateX(-50%);
       pointer-events: auto;
@@ -463,11 +466,12 @@ function saveDocumentNode(directory: string, canvasPath: string, nodeId: string,
 
             &.addNodeButton {
               margin-right: 6px;
-              color: var(--el-bg-color);
-              background: var(--el-text-color-primary);
-              border-color: transparent;
+              border: 0;
+              background: linear-gradient(135deg, color-mix(in srgb, var(--el-color-primary) 88%, #fff), color-mix(in srgb, var(--el-color-primary) 62%, #0b4a3f));
+              color: #fff;
+              box-shadow: 0 4px 12px color-mix(in srgb, var(--el-color-primary) 24%, transparent);
 
-              &:hover { opacity: 0.85; }
+              &:hover { opacity: 0.9; }
               &.is-disabled { opacity: 0.45; }
             }
           }
@@ -486,11 +490,11 @@ function saveDocumentNode(directory: string, canvasPath: string, nodeId: string,
         flex-shrink: 0;
         margin: 0;
         padding: 0;
-        border: 1px solid color-mix(in srgb, #6edfdc 30%, var(--el-border-color-light));
+        border: 1px solid color-mix(in srgb, var(--el-color-primary) 42%, var(--el-border-color-light));
         border-radius: 50%;
-        background: linear-gradient(145deg, color-mix(in srgb, #96f9f0 15%, var(--el-bg-color-overlay)), var(--el-bg-color-overlay) 65%,
-          color-mix(in srgb, #8588ff 18%, var(--el-bg-color-overlay)));
-        box-shadow: inset 0 1px 0 #ffffff52;
+        background: linear-gradient(145deg, color-mix(in srgb, var(--el-color-primary) 20%, var(--el-bg-color-overlay)), var(--el-bg-color-overlay) 65%,
+          color-mix(in srgb, #ffb86b 18%, var(--el-bg-color-overlay)));
+        box-shadow: inset 0 1px 0 #ffffff52, 0 6px 18px color-mix(in srgb, var(--el-color-primary) 22%, transparent);
         color: #f4fffe;
         overflow: hidden;
         isolation: isolate;
@@ -512,8 +516,8 @@ function saveDocumentNode(directory: string, canvasPath: string, nodeId: string,
 
         &::before {
           z-index: -2;
-          background: radial-gradient(ellipse at 22% 15%, #adfff0, transparent 50%), radial-gradient(ellipse at 85% 85%, #b29aff, transparent 55%),
-            radial-gradient(ellipse at 85% 20%, #25dccc, transparent 50%), linear-gradient(150deg, #10aec1, #3765c6 60%, #765bd3);
+          background: radial-gradient(ellipse at 22% 15%, #b9ffe9, transparent 50%), radial-gradient(ellipse at 85% 85%, #ffd7a8, transparent 55%),
+            radial-gradient(ellipse at 85% 20%, #3fcfa6, transparent 50%), linear-gradient(150deg, #0e6b5a, #2e9e86 60%, #3fcfa6);
           animation: agentFlow 5.4s linear infinite;
           filter: saturate(1.05);
           transition: filter 180ms ease;
@@ -522,7 +526,7 @@ function saveDocumentNode(directory: string, canvasPath: string, nodeId: string,
         &::after {
           z-index: -1;
           background: radial-gradient(ellipse 12% 18% at 50% 50%, #ffffffa6, #d3fff773 35%, transparent 80%),
-            radial-gradient(ellipse at 32% 18%, #ffffff99, transparent 42%), radial-gradient(ellipse at 65% 95%, #17246070, transparent 65%);
+            radial-gradient(ellipse at 32% 18%, #ffffff99, transparent 42%), radial-gradient(ellipse at 65% 95%, #0e3b3366, transparent 65%);
           background-size: 160% 160%, 100% 100%, 100% 100%;
           background-position: 75% 85%, 0 0, 0 0;
           background-repeat: no-repeat;

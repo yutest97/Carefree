@@ -59,7 +59,7 @@ bun run --cwd apps/mobile build
 
 在 Actions 中选择 **Debug build → Run workflow**，将 `target` 设为 `androidArm64` 可单独构建 ARM64 APK，选择 `all` 会同时构建桌面与 Android。版本留空时使用所选标签或项目配置。Android 默认生成 debug 包，可在本次运行的 Artifacts 或 Summary 中下载。开启 `androidRelease` 会启用 R8 和资源裁剪、关闭 `debuggable` 并去掉文件名中的 `-debug` 后缀；发布和分发应使用此模式。两种模式使用相同默认签名，无需配置 Android Secrets。
 
-现有 **Release Carefree** 工作流在推送 `vX.Y.Z` 标签或手动发布时，会并行构建桌面与 Android，全部成功后将 `toonflow-X.Y.Z-android-arm64.apk` 附加到同一个 GitHub Release。Android APK 暂不上传到桌面更新托管接口，应用内「前往 GitHub 更新」会打开最新发布页。
+现有 **Release Carefree** 工作流在推送 `vX.Y.Z` 标签或手动发布时，会并行构建桌面与 Android，全部成功后将 `carefree-X.Y.Z-android-arm64.apk` 附加到同一个 GitHub Release。Android APK 暂不上传到桌面更新托管接口，应用内「前往 GitHub 更新」会打开最新发布页。
 
 CI 使用 Windows 2025 自带 JDK 17 和已接受许可的 Android SDK 目录；依赖安装后，mobile `setup` 负责准备所需 SDK、GeckoView 与构建依赖，再执行离线 `build`。默认签名文件直接来自源码，Android 构建不读取签名 Secrets。
 
