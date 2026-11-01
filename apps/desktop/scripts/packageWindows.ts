@@ -4,6 +4,7 @@ import { file, write } from "@toonflow/file/bun";
 import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import desktopConfig from "../../../electrobun.config";
+import { signWindowsFiles, windowsSigningConfigured } from "./signWindows";
 
 if (process.platform !== "win32" || process.arch !== "x64") {
   throw new Error("NSIS 打包需要 Windows x64 环境。");
@@ -13,7 +14,7 @@ const projectDir = realpathSync(resolve(import.meta.dirname, "../../.."));
 process.chdir(projectDir);
 const nsisDir = resolve("build/desktop/nsis");
 const artifactDir = resolve(desktopConfig.build.artifactFolder);
-const outputFile = join(artifactDir, `toonflow-${desktopConfig.app.version}-Setup.exe`);
+const outputFile = join(artifactDir, `carefree-${desktopConfig.app.version}-Setup.exe`);
 const installerDir = resolve("apps/desktop/installer");
 const appIcon = resolve("packages/assets/logo.ico");
 const makensis = process.env.NSIS_PATH ?? "C:/Program Files (x86)/NSIS/makensis.exe";
@@ -67,6 +68,8 @@ copyFileSync(sdkLicense, join(webViewDir, "webView2SdkLicense.txt"));
 copyFileSync(sdkNotice, join(webViewDir, "webView2SdkNotice.txt"));
 await $`${csc} /nologo /target:exe /platform:x64 /optimize+ /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /reference:${webViewCore} /out:${join(webViewDir, "checkWebView2.exe")} ${join(installerDir, "checkWebView2.cs")}`;
 await $`${csc} /nologo /target:exe /platform:x64 /optimize+ /out:${runningChecker} ${join(installerDir, "checkRunning.cs")}`;
+await signWindowsFiles([join(webViewDir, "checkWebView2.exe"), runningChecker]);
+if (!windowsSigningConfigured()) console.log("未配置 CAREFREE_SIGN_PFX，跳过 Windows 代码签名。");
 const quotePowerShell = (value: string) => `'${value.replaceAll("'", "''")}'`;
 // ACT: 每次打包刷新微软引导器，验签通过后才替换旧文件，避免长期沿用旧版组件。
 // ACT: 官方短链不可达时，可显式传入它当前重定向的微软 CDN 地址；不关闭 TLS 或复用旧缓存。
@@ -127,6 +130,7 @@ try {
     desktopConfig.app.version
   } /DappIdentifier=${desktopConfig.app.identifier} /DappTar=${tarFile} /DappHash=${manifest.hash} /DoutputFile=${outputFile} /DinitializeInstallScript=${initializeInstallScript} ${join(installerDir, "installer.nsi")}`;
   console.log(`NSIS 安装包：${outputFile}`);
+  await signWindowsFiles([outputFile]);
 } finally {
   if (dirname(realpathSync(stagingDir)) !== realpathSync(nsisDir)) throw new Error("拒绝清理暂存目录以外的路径。");
   rmSync(stagingDir, { recursive: true });

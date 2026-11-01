@@ -4,6 +4,7 @@ import { dirname, resolve } from "node:path";
 import copyDocumentPackages from "../../server/scripts/copyDocumentPackages";
 import copySandboxPackages from "../../server/scripts/copySandboxPackages";
 import prepareMacDmg from "./macDmg";
+import { signWindowsFiles } from "./signWindows";
 
 const projectDir = resolve(import.meta.dir, "../../..");
 const mode = process.argv[2];
@@ -59,6 +60,10 @@ if (!isMac) {
   await $`${csc} /nologo /target:winexe /platform:x64 /optimize+ /reference:System.Windows.Forms.dll /reference:System.Web.Extensions.dll /out:${resolve(protocolDir, "protocolLauncher.exe")} ${resolve(projectDir, "apps/desktop/native/protocolLauncher.cs")}`;
   await $`${csc} /nologo /target:winexe /platform:x64 /optimize+ /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /out:${resolve(protocolDir, "saveFileDialog.exe")} ${resolve(projectDir, "apps/desktop/native/saveFileDialog.cs")}`;
   await $`${csc} /nologo /target:winexe /platform:x64 /optimize+ /reference:System.Web.Extensions.dll /reference:System.Windows.Forms.dll /reference:Microsoft.CSharp.dll /out:${resolve(protocolDir, "updateHelper.exe")} ${resolve(projectDir, "apps/desktop/native/updateHelper.cs")}`;
+  if (mode !== "dev") {
+    await signWindowsFiles(["startupLauncher.exe", "protocolLauncher.exe", "saveFileDialog.exe", "updateHelper.exe"]
+      .map(name => resolve(protocolDir, name)));
+  }
 }
 // ACT: 团队暂不打包；恢复时也在 package.json 的 dev:plugins 中加回 --filter './packages/teams/*'。
 for (const script of mode === "dev" ? ["dev:plugins"] : [

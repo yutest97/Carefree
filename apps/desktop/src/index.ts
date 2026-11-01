@@ -47,7 +47,7 @@ async function restoreInstallRegistration(installDirectory: string) {
       }
       const protocolLauncher = resolve(PATHS.RESOURCES_FOLDER, "app/protocolLauncher.exe");
       if (existsSync(protocolLauncher)) {
-        const protocolKey = "HKCU\\Software\\Classes\\toonflow";
+        const protocolKey = "HKCU\\Software\\Classes\\carefree";
         const commandKey = `${protocolKey}\\shell\\open\\command`;
         const command = `"${protocolLauncher}" "%1"`;
         let protocolExists = true;
@@ -59,7 +59,7 @@ async function restoreInstallRegistration(installDirectory: string) {
         }
         // ACT: 自动更新不经过 NSIS；仅补全缺失协议，已有注册（包括其他安装）保持不动。
         if (!protocolExists) {
-          for (const [key, value] of [[protocolKey, "URL:Toonflow Protocol"], [`${protocolKey}\\DefaultIcon`, `"${resolve(PATHS.RESOURCES_FOLDER, "app.ico")}",0`], [commandKey, command]]) {
+          for (const [key, value] of [[protocolKey, "URL:Carefree Protocol"], [`${protocolKey}\\DefaultIcon`, `"${resolve(PATHS.RESOURCES_FOLDER, "app.ico")}",0`], [commandKey, command]]) {
             await execFileAsync("reg.exe", ["add", key, "/ve", "/t", "REG_SZ", "/d", value, "/f"], { windowsHide: true });
           }
           await execFileAsync("reg.exe", ["add", protocolKey, "/v", "URL Protocol", "/t", "REG_SZ", "/d", "", "/f"], { windowsHide: true });
@@ -90,7 +90,7 @@ async function start() {
     if (process.platform === "darwin") {
       // ACT: WKWebView 的 Command 编辑快捷键由原生菜单角色交给当前响应者处理。
       ApplicationMenu.setApplicationMenu([
-        { label: "Toonflow", submenu: [
+        { label: "Carefree", submenu: [
           { role: "about" },
           { type: "separator" },
           { role: "hide" },
@@ -162,7 +162,7 @@ async function start() {
     const width = Math.min(1280, workArea.width - 64);
     const height = Math.min(960, workArea.height - 64);
     const mainWindow = new BrowserWindow({
-      title: "Toonflow",
+      title: "Carefree",
       url: `http://127.0.0.1:${connection.port}/?desktop=1${connection.remote ? "&remote=1" : ""}`,
       navigationRules: JSON.stringify(getNavigationRules(connection.port)),
       // ACT: Windows SDK 未接管普通新窗口请求，在创建 WebView 弹窗前交给宿主。
@@ -226,7 +226,7 @@ async function start() {
         // ACT: 页面未就绪或加载失败时保留原生后备，正常界面使用应用内弹窗。
         const result = await Utils.showMessageBox({
           type: "warning",
-          title: t`退出 Toonflow`,
+          title: t`退出 Carefree`,
           message: t`退出后，正在运行的任务将被中断。确定要退出吗？`,
           buttons: [t`取消`, t`退出`],
           defaultId: 0,

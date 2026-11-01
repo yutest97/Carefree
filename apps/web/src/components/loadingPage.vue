@@ -85,8 +85,6 @@ function finishFilling() {
     aspect-ratio: 1;
     transform: translate(-50%, -50%);
 
-    .dark & { filter: invert(1); }
-
     .logoOutline {
       width: 100%;
       line-height: 0;

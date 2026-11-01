@@ -4,10 +4,10 @@ const startupTarget = process.platform === "darwin" ? (process.arch === "x64" ? 
 
 export default {
   app: {
-    name: "toonflow",
-    identifier: "local.toonflow.desktop",
-    version: process.env.appVersion ?? "2.0.0",
-    urlSchemes: ["toonflow"],
+    name: "carefree",
+    identifier: "com.carefree.desktop",
+    version: process.env.appVersion ?? "0.1.0",
+    urlSchemes: ["carefree"],
   },
   build: {
     mainProcess: "bun",
@@ -53,8 +53,8 @@ export default {
     },
   },
   release: {
-    // ACT: 构建基线和补丁固定取 GitHub；客户端更新源由设置单独控制，默认官方源。
-    baseUrl: `${process.env.GITHUB_SERVER_URL || "https://github.com"}/${process.env.GITHUB_REPOSITORY || "HBAI-Ltd/Toonflow-app"}/releases/latest/download`,
+    // ACT: 二开版本默认不接上游更新源；配置自己的仓库后再设置 GITHUB_REPOSITORY 或改为自定义更新地址。
+    baseUrl: process.env.GITHUB_REPOSITORY ? `${process.env.GITHUB_SERVER_URL || "https://github.com"}/${process.env.GITHUB_REPOSITORY}/releases/latest/download` : "",
     // ACT: 常规构建不访问更新服务器；release:desktop 显式开启增量构建。
     generatePatch: process.env.generateUpdatePatch === "1",
   },

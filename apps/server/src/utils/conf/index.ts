@@ -1,7 +1,6 @@
 import conf from "conf";
 import { mkdirSync, readdirSync, realpathSync } from "@toonflow/file";
 import { resolve } from "node:path";
-import tfRouter from "@toonflow/providers/language/tfRouter";
 import type { RemoteTeam } from "@/utils/teams";
 import type { A2aSettings } from "@/agent/a2a/settings";
 import type { desktopUpdateAttempt } from "@/types/desktop";
@@ -9,7 +8,8 @@ import type { MobileLinkConfig } from "@/utils/mobileLink";
 import { normalizeNodeMenu, serializeNodeMenu } from "@/lib/nodeMenu";
 import type { SavedMcpServer } from "@toonflow/mcp/client";
 
-const autoInstallProviders = [tfRouter];
+// ACT: 二开版本不预装任何中转平台，供应商全部由用户自备 API 或本地 ComfyUI。
+const autoInstallProviders: { id: string; label: string; icon?: string; version?: string; apiUrl?: string; protocol?: string; models: unknown[] }[] = [];
 const dataDirectory = process.env.TOONFLOW_DATA_DIR ?? resolve(import.meta.dirname, "../../../../../data");
 mkdirSync(dataDirectory, { recursive: true });
 const configDirectory = realpathSync(dataDirectory);

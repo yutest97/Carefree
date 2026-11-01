@@ -40,6 +40,8 @@ type ProviderConfig<TRules extends readonly ProviderFormRule[]> = {
 interface ProviderContext<TConfig = Record<string, unknown>> {
   config: TConfig;
   signal?: AbortSignal;
+  /** 宿主注入的原始 fetch，不继承本次生成请求的取消信号；仅用于取消后的清理或独立查询。 */
+  queryFetch: typeof globalThis.fetch;
   /** 宿主直接注入工具，供应商无需 import；FFmpeg 为按需安装的插件能力。 */
   tool: ProviderTools;
 }

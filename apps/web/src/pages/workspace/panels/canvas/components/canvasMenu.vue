@@ -35,23 +35,17 @@
             <el-text v-if="renameError" type="danger" role="alert">{{ renameError }}</el-text>
           </div>
         </el-popover>
+        <el-divider direction="vertical" />
+        <el-button v-if="exporting" class="exportButton" text :icon="IconX" title="导出中，点击取消" aria-label="取消导出项目" @click="exportProject" />
+        <el-button v-else class="exportButton" text :icon="IconFileZip" :disabled="!directory" title="导出项目 ZIP" aria-label="导出项目 ZIP" @click="exportProject" />
       </div>
     </el-card>
     <div class="menuExtension"><slot /></div>
   </panel>
-  <panel v-if="visibleProviderBalances.length" class="balanceMenuPanel" position="top-right">
+  <panel v-if="providerBalances.length" class="balanceMenuPanel" position="top-right">
     <div class="balanceList" tabindex="0" aria-label="供应商余额">
-      <el-card v-for="item in visibleProviderBalances" :key="item.id" class="balanceCard" shadow="never" :bodyStyle="{ padding: '2px 4px' }">
-        <el-popover v-if="item.id === 'tfRouter'" :visible="balanceVisible" @update:visible="value => { if (!rechargeVisible) balanceVisible = value; }" trigger="click" placement="bottom-end" :width="360" :showArrow="false">
-          <template #reference>
-            <el-button class="balanceTrigger" text :aria-busy="item.loading" :title="item.error || 'TF-Router 剩余可用余额'" aria-label="TF-Router 余额与充值">
-              <span class="providerLabel">{{ item.label }}</span>
-              <span>{{ item.balance ? `${balanceFormat.format(Math.min(item.balance.balance, item.balance.keyBalance ?? Infinity))} ${item.balance.unit}` : '—' }}</span>
-            </el-button>
-          </template>
-          <tfAccount v-if="balanceVisible" :apiKey="tfBalanceApiKey" :visible="balanceVisible" :saveApiKey="saveTfMediaApiKey" @rechargeVisibleChange="rechargeVisible = $event" />
-        </el-popover>
-        <el-button v-else class="balanceTrigger" text :loading="item.loading" :title="item.error || `点击刷新 ${item.label} 余额`" :aria-label="`刷新 ${item.label} 余额`" @click="refreshProviderBalance(item.id)">
+      <el-card v-for="item in providerBalances" :key="item.id" class="balanceCard" shadow="never" :bodyStyle="{ padding: '2px 4px' }">
+        <el-button class="balanceTrigger" text :loading="item.loading" :title="item.error || `点击刷新 ${item.label} 余额`" :aria-label="`刷新 ${item.label} 余额`" @click="refreshProviderBalance(item.id)">
           <span class="providerLabel">{{ item.label }}</span>
           <span>{{ item.balance ? `${balanceFormat.format(Math.min(item.balance.balance, item.balance.keyBalance ?? Infinity))} ${item.balance.unit}` : '—' }}</span>
         </el-button>
@@ -85,13 +79,13 @@ import { locale, translate } from "@toonflow/i18n/vue";
 import { computed, inject, nextTick, onBeforeUnmount, ref, shallowRef, watch, type ShallowRef } from "vue";
 import { Panel, useVueFlow, type FlowExportObject } from "@vue-flow/core";
 import { ElMessage, ElMessageBox, type DropdownInstance, type FilterNodeMethodFunction, type InputInstance, type LoadFunction, type TreeInstance } from "element-plus";
-import { IconVector, IconCheck, IconChevronDown, IconChevronUp, IconChevronRight, IconDots, IconFolder, IconFolderOpen, IconFolderPlus, IconPlus, IconSearch } from "@tabler/icons-vue";
+import { IconVector, IconCheck, IconChevronDown, IconChevronUp, IconChevronRight, IconDots, IconFileZip, IconFolder, IconFolderOpen, IconFolderPlus, IconPlus, IconSearch, IconX } from "@tabler/icons-vue";
 import { useWorkspaceStore } from "@/stores/workspace";
 import useWorkspaceFiles from "@/lib/workspaceFiles";
+import saveFile from "@/lib/saveFile";
 import { getCanvasAssetDirectories, isCanvasFile } from "@/pages/workspace/canvasFile";
 import { findRemainingCanvas } from "../canvasFiles";
-import tfAccount from "@/components/settings/tfAccount.vue";
-import { providerBalances, tfBalanceApiKey, saveTfMediaApiKey, refreshProviderBalance } from "@/lib/providerBilling";
+import { providerBalances, refreshProviderBalance } from "@/lib/providerBilling";
 
 const props = defineProps<{
   directory?: string;
@@ -100,10 +94,7 @@ const props = defineProps<{
   flushSave: (action?: () => Promise<void>) => Promise<void>;
 }>();
 const workspaceStore = useWorkspaceStore();
-const balanceVisible = ref(false);
-const rechargeVisible = ref(false);
 const balanceFormat = computed(() => new Intl.NumberFormat(locale.value, { maximumFractionDigits: 6 }));
-const visibleProviderBalances = computed(() => providerBalances.value.filter(item => item.id !== "tfRouter" || (item.balance && !item.error)));
 const workspaceName = computed(() => workspaceStore.project?.name || translate("未命名工作区"));
 const projectNameDraft = ref("");
 watch([() => workspaceStore.project?.directory, workspaceName], () => {
@@ -115,6 +106,47 @@ function saveProjectName(event: Event) {
   const project = workspaceStore.project;
   if (project) workspaceStore.renameProject(project.directory, projectNameDraft.value);
   projectNameDraft.value = workspaceName.value;
+}
+
+const exporting = ref(false);
+let exportController: AbortController | undefined;
+
+function exportFileName(name: string) {
+  let value = name.replace(/[<>:"/\\|?*\x00-\x1f\x7f-\x9f]/g, "_").slice(0, 120).replace(/[. ]+$/, "");
+  if (!value || /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(value)) value = "Carefree";
+  return value;
+}
+
+async function exportProject() {
+  if (exporting.value) {
+    exportController?.abort();
+    return;
+  }
+  if (!props.directory) return;
+  const directory = props.directory;
+  const controller = new AbortController();
+  exportController = controller;
+  exporting.value = true;
+  try {
+    await props.flushSave();
+    checkCanvasDirectory(directory, controller.signal);
+    const files = useWorkspaceFiles(directory);
+    await saveFile(() => files.exportZip(controller.signal), `${exportFileName(workspaceName.value)}.zip`);
+  } catch (error) {
+    if (controller.signal.aborted) return;
+    let message = error instanceof Error ? error.message : translate("导出项目失败，请重试");
+    if (axios.isAxiosError(error)) {
+      const data = error.response?.data instanceof Blob
+        ? await error.response.data.text().then(JSON.parse).catch(() => null) : error.response?.data;
+      if (typeof data?.message === "string") message = data.message;
+    }
+    ElMessage.error(message);
+  } finally {
+    if (exportController === controller) {
+      exportController = undefined;
+      exporting.value = false;
+    }
+  }
 }
 
 type Canvas = { id: string; name: string; flow?: Pick<FlowExportObject, "nodes" | "edges" | "viewport"> };
@@ -184,6 +216,7 @@ watch(canvasListVisible, opened => {
   if (!opened) { treeRequest++; loadingTree.value = false; itemMenu.value?.handleClose(); cancelFolder(); }
 });
 onBeforeUnmount(() => treeController.abort());
+onBeforeUnmount(() => exportController?.abort());
 
 function treeChildren(path: string): CanvasEntry[] {
   let entries = treeEntries.value;
@@ -980,6 +1013,13 @@ defineExpose({ getCanvases, peekCanvases, initialized, addCanvas, switchCanvas, 
       font-size: 13px;
       :deep(> span) { display: flex; align-items: center; gap: 4px; min-width: 0; }
       span { min-width: 0; max-width: 160px; overflow: hidden; text-overflow: ellipsis; }
+    }
+
+    .exportButton {
+      width: 28px;
+      height: 28px;
+      margin: 0;
+      padding: 0;
     }
 
   }

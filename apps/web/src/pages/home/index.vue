@@ -4,8 +4,8 @@
     <aside id="homeSidebar" class="homeSidebar" aria-label="首页侧栏">
       <div class="sidebarHeader">
         <div class="sidebarBrand">
-          <el-image class="sidebarLogo" :src="logoUrl" fit="contain" alt="Toonflow" />
-          <span class="brandName">Toonflow</span>
+          <el-image class="sidebarLogo" :src="logoUrl" fit="contain" alt="Carefree" />
+          <span class="brandName">Carefree</span>
         </div>
         <button class="sidebarToggle" type="button" :aria-label="sidebarCollapsed ? '展开侧栏' : '收起侧栏'" :title="sidebarCollapsed ? '展开侧栏' : '收起侧栏'" :aria-expanded="!sidebarCollapsed" aria-controls="homeSidebar" @click="sidebarCollapsed = !sidebarCollapsed">
           <icon-layout-sidebar-left-expand v-if="sidebarCollapsed" :size="18" aria-hidden="true" />
@@ -24,13 +24,6 @@
         </button>
       </nav>
       <div class="sidebarFooter">
-        <button class="sidebarItem deviceButton" :class="{ connected: deviceHubEnabled || mobileConnection.online === true }" type="button" :aria-label="mobileConnectionLabel" :title="mobileConnectionLabel" @click="mobileConnectVisible = true">
-          <span class="sidebarIcon">
-            <component :is="deviceHubEnabled || mobileConnection.mode === 'remote' ? IconDeviceDesktop : IconQrcode" :size="18" aria-hidden="true" />
-            <span v-if="deviceHubEnabled || mobileConnection.online === true" class="connectionDot" />
-          </span>
-          <span class="sidebarText">{{ mobileConnectionLabel }}</span>
-        </button>
         <button class="sidebarItem" type="button" :aria-label="hasDesktopUpdate ? '设置，有新版本可用' : '设置'" :title="hasDesktopUpdate ? '设置，有新版本可用' : '设置'" @click="settingsVisible = true">
           <span class="sidebarIcon">
             <icon-settings :size="18" aria-hidden="true" />
@@ -38,10 +31,6 @@
           </span>
           <span class="sidebarText">设置</span>
         </button>
-        <a class="sidebarItem githubLink" href="https://github.com/HBAI-Ltd/Toonflow-app" target="_blank" rel="noopener noreferrer" aria-label="GitHub" title="GitHub">
-          <icon-brand-github :size="18" aria-hidden="true" />
-          <span class="sidebarText">GitHub</span>
-        </a>
       </div>
     </aside>
     <el-scrollbar ref="pageScroll" class="pageScroll" @scroll="updateActiveSection">
@@ -49,7 +38,7 @@
         <el-main class="pageContent">
           <section class="creationPanel" data-home-section="home" aria-label="创建项目">
             <div class="brand">
-              <el-image class="brandLogo" :src="logoUrl" fit="contain" alt="Toonflow" />
+              <el-image class="brandLogo" :src="logoUrl" fit="contain" alt="Carefree" />
               <h1>今天要做点什么？</h1>
             </div>
             <div class="promptArea">
@@ -117,7 +106,6 @@
     </el-scrollbar>
     <assetLibraryDialog v-model="assetsVisible" />
     <settings v-model="settingsVisible" />
-    <mobileConnect v-model="mobileConnectVisible" />
     <workspacePicker ref="relocationPicker" hideTrigger />
   </div>
 </template>
@@ -131,7 +119,7 @@ import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox, type InputInstance, type ScrollbarInstance } from "element-plus";
 import { getReadableFileMimeType, readableFileAccept } from "@toonflow/server/documentFormats";
 import {
-  IconQrcode, IconDeviceDesktop, IconHome, IconCompass,
+  IconHome, IconCompass,
   IconArrowUp, IconPlus, IconLoader2,
   IconFolder, IconEdit, IconFileZip,
   IconTrash, IconPaperclip,
@@ -143,7 +131,6 @@ import type { AgentAttachment } from "@/components/agent/types";
 import logoUrl from "@toonflow/assets/logo.svg";
 import { useWorkspaceStore, type Project } from "@/stores/workspace";
 import { hasDesktopUpdate } from "@/stores/desktopUpdate";
-import { deviceHubEnabled, mobileConnection, mobileConnectionLabel } from "@/lib/mobile";
 import useWorkspaceFiles from "@/lib/workspaceFiles";
 import saveFile from "@/lib/saveFile";
 import { waitForControlValue } from "@/lib/mcpControl";
@@ -156,7 +143,6 @@ import workspacePicker from "./workspacePicker.vue";
 
 const settingsVisible = ref(false);
 const assetsVisible = ref(false);
-const mobileConnectVisible = ref(false);
 const sidebarCollapsed = ref(false);
 const pageScroll = ref<ScrollbarInstance>();
 const backgroundScrollTop = ref(0);
@@ -166,7 +152,6 @@ const homeSections = [
   { id: "projects", label: "项目", icon: IconFolder },
   { id: "explore", label: "探索", icon: IconCompass },
 ];
-const mobileConnect = defineAsyncComponent(() => import("@/components/mobileConnect.vue"));
 const router = useRouter();
 const pageLifetime = new AbortController();
 const creating = ref(false);
@@ -430,7 +415,7 @@ async function exportProject(project: Project) {
   exportingDirectory.value = directory;
   try {
     let name = project.name.replace(/[<>:"/\\|?*\x00-\x1f\x7f-\x9f]/g, "_").slice(0, 120).replace(/[. ]+$/, "");
-    if (!name || /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(name)) name = "Toonflow";
+    if (!name || /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(name)) name = "Carefree";
     const files = useWorkspaceFiles(directory);
     await saveFile(() => files.exportZip(pageLifetime.signal), `${name}.zip`);
   } catch (error) {
@@ -564,8 +549,6 @@ async function createProject(fromPrompt = true) {
           width: 30px;
           height: 30px;
           transition: opacity var(--sidebarFade) ease;
-
-          .dark & { filter: invert(1); }
         }
 
         .brandName {
@@ -699,10 +682,6 @@ async function createProject(fromPrompt = true) {
               flex-shrink: 0;
               width: clamp(28px, 3.4vw, 44px);
               height: clamp(28px, 3.4vw, 44px);
-
-              .dark & {
-                filter: invert(1);
-              }
             }
 
             h1 {

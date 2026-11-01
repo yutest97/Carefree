@@ -10,7 +10,7 @@
           :disabled="saving"
           :aria-pressed="selectedProvider === item.id"
           @click="selectedProvider = item.id">
-          <img v-if="item.icon" class="providerLogo" :class="{ monochrome: item.id === 'tfRouter' }" :src="item.icon" alt="" />
+          <img v-if="item.icon" class="providerLogo" :src="item.icon" alt="" />
           <modelIcon v-else :model="item.id" :size="18" />
           <span>{{ item.label }}</span>
         </button>
@@ -90,8 +90,8 @@ const providerRules = computed(() =>
 );
 
 watch(
-  [visible, activeProvider, () => formValues.value.apiKey, modelRefresh],
-  ([isVisible, provider, key], _previous, onCleanup) => {
+  [visible, activeProvider, () => formValues.value.apiKey, () => formValues.value.baseUrl, modelRefresh],
+  ([isVisible, provider, key, baseUrl], _previous, onCleanup) => {
     models.value = [];
     modelError.value = "";
     fetching.value = false;
@@ -103,13 +103,16 @@ watch(
     }
     const apiKey = typeof key === "string" ? key.trim() : "";
     if (!apiKey) return;
+    // ACT: 允许供应商把接口地址做成可配置项，本地模型可填 Ollama / LM Studio 等地址。
+    const apiUrl = typeof baseUrl === "string" && baseUrl.trim() || ("apiUrl" in provider ? provider.apiUrl : "");
+    if (!apiUrl) return;
     const controller = new AbortController();
     fetching.value = true;
     // ACT: 输入停顿后自动获取；输入变化时立即取消旧请求，避免逐字请求和结果串到新密钥。
     const timer = setTimeout(async () => {
       try {
         const { data } = await axios.post("/api/providers/models", {
-          apiUrl: provider.apiUrl, protocol: provider.protocol, apiKey,
+          apiUrl, protocol: provider.protocol, apiKey,
         }, { signal: controller.signal, timeout: 35000 });
         if (controller.signal.aborted) return;
         if (data.code !== 200 || !Array.isArray(data.data)) throw new Error(data.message || "获取模型列表失败");
@@ -147,6 +150,11 @@ async function addProvider() {
     formError.value = "请填写 API Key";
     return;
   }
+  const apiUrl = typeof values.baseUrl === "string" && values.baseUrl.trim() || ("apiUrl" in provider ? provider.apiUrl : "");
+  if (!apiUrl) {
+    formError.value = "请填写 API 地址";
+    return;
+  }
   saving.value = true;
   try {
     const addedProvider = {
@@ -154,7 +162,7 @@ async function addProvider() {
       label: provider.label,
       icon: provider.icon,
       apiKey,
-      apiUrl: "apiUrl" in provider ? provider.apiUrl : "",
+      apiUrl,
       protocol: "protocol" in provider ? provider.protocol : "",
       models: models.value.map(model => ({ ...model })),
     };

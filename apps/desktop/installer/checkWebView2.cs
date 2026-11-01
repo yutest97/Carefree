@@ -54,7 +54,7 @@ internal static class checkWebView2
             if (versionResult != 0 || args.Length == 1) return versionResult;
 
             stage = "temporaryProfile";
-            userDataFolder = Path.Combine(Path.GetTempPath(), "toonflowWebView2-" + Guid.NewGuid().ToString("N"));
+            userDataFolder = Path.Combine(Path.GetTempPath(), "carefreeWebView2-" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(userDataFolder);
             // 仅覆盖本检测进程，避免全局环境变量让探测误用用户的真实浏览器目录。
             Environment.SetEnvironmentVariable("WEBVIEW2_USER_DATA_FOLDER", userDataFolder);
@@ -129,7 +129,7 @@ internal static class checkWebView2
         int result;
         try
         {
-            // ACT: 独立临时用户目录只验证内核启动，不代表 Toonflow 实际用户目录一定健康。
+            // ACT: 独立临时用户目录只验证内核启动，不代表 Carefree 实际用户目录一定健康。
             stage = "environment";
             environment = await CoreWebView2Environment.CreateAsync(null, userDataFolder);
             environment.BrowserProcessExited += delegate { browserExited.TrySetResult(true); };

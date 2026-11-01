@@ -13,7 +13,8 @@ import initializePlugins from "@/utils/plugins/initialize";
 import { languageRequest, resolveRequestLocale, runWithLocale, setLocaleFallback, translateError, translateMessage } from "@/lib/i18n";
 import { detectLocale, normalizeLocale } from "@toonflow/i18n";
 
-const autoInstallProviders = ["tfRouter.ts", "apiMart.ts", "metaso.ts", "compshare.ts"];
+// ACT: 只预装本地 ComfyUI 和本地语音合成；其余供应商由用户按需添加。
+const autoInstallProviders = ["comfyui.ts", "localTts.ts"];
 
 export async function createApp({
   webRoot,

@@ -4,7 +4,8 @@ import type { updateSnapshot } from "@toonflow/server/desktop";
 import { settings } from "@/stores/settings";
 import { actualPlatform } from "@/lib/platform";
 
-export const desktopAutoUpdate = computed(() => settings.value.desktopAutoUpdate !== false);
+// 二开默认关闭自动更新，避免客户端从上游仓库拉取官方包覆盖本地定制版本。
+export const desktopAutoUpdate = computed(() => settings.value.desktopAutoUpdate === true);
 export const desktopUpdateCustomUrl = computed(() => typeof settings.value.desktopUpdateCustomUrl === "string" ? settings.value.desktopUpdateCustomUrl : "");
 export const desktopUpdateSource = computed(() => settings.value.desktopUpdateSource === "custom" && desktopUpdateCustomUrl.value ? "custom"
   : settings.value.desktopUpdateSource === "github" ? "github" : "official");
