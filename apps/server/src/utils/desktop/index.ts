@@ -8,8 +8,8 @@ import { messageError } from "@toonflow/i18n/errors";
 
 // ACT: 二开版本不再查询上游更新服务；默认从 Carefree 发布页更新，自建更新服务器请在设置中填写自定义源。
 const updateBaseUrls = {
-  official: "https://github.com/HBAI-Ltd/Carefree-app/releases/latest/download",
-  github: "https://github.com/HBAI-Ltd/Carefree-app/releases/latest/download",
+  official: "https://github.com/yutest97/Carefree/releases/latest/download",
+  github: "https://github.com/yutest97/Carefree/releases/latest/download",
 };
 const updateRuntimeId = crypto.randomUUID();
 let cancelledUpdateAttempt: string | undefined;
@@ -62,7 +62,7 @@ function getInstallFailure(local: Awaited<ReturnType<DesktopRuntime["updater"]["
     currentVersion: local.version,
     currentHash: local.hash,
     message: translateMessage(message),
-    downloadUrl: "https://github.com/HBAI-Ltd/Carefree-app/releases/latest",
+    downloadUrl: "https://github.com/yutest97/Carefree/releases/latest",
   };
 }
 

@@ -4,7 +4,7 @@
   "description": "由导演统筹编写与审阅成员，根据已有故事和约束整理可审阅的文字分镜方案。",
   "version": "2.0.0",
   "author": "Carefree",
-  "github": "https://github.com/HBAI-Ltd/Carefree-app",
+  "github": "https://github.com/yutest97/Carefree",
   "entry": "director",
   "members": {
     "director": {

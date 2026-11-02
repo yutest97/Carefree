@@ -5,7 +5,7 @@ metadata:
   version: "2.1.0"
   displayName: 画布操作手册
   author: Carefree
-  github: https://github.com/HBAI-Ltd/Carefree-app
+  github: https://github.com/yutest97/Carefree
 ---
 
 # 画布操作手册

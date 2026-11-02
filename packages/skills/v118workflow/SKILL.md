@@ -5,7 +5,7 @@ metadata:
   version: "1.1.0"
   displayName: v1.1.8 分集制作流程
   author: Carefree
-  github: https://github.com/HBAI-Ltd/Carefree-app
+  github: https://github.com/yutest97/Carefree
 ---
 
 # v1.1.8 分集制作流程

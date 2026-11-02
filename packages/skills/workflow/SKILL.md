@@ -5,7 +5,7 @@ metadata:
   version: "2.7.0"
   displayName: 视频制作工作流
   author: Carefree
-  github: https://github.com/HBAI-Ltd/Carefree-app
+  github: https://github.com/yutest97/Carefree
 ---
 
 # Carefree 画布制作工作流
