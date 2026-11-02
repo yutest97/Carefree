@@ -55,6 +55,12 @@ on:
       MACOS_NOTARIZATION_KEY_BASE64:
         description: 对应 API 密钥的 P8 私钥文件 Base64
         required: false
+      CAREFREE_SIGN_PFX_BASE64:
+        description: Windows 代码签名证书 PFX 的 Base64；未配置时跳过签名
+        required: false
+      CAREFREE_SIGN_PASSWORD:
+        description: PFX 导出密码，证书未加密时留空
+        required: false
     outputs:
       version:
         description: 实际构建的包版本号
@@ -124,7 +130,9 @@ jobs:
     env:
       appVersion: ${{ needs.prepare.outputs.version }}
       releaseMode: ${{ inputs.generatePatch && '--auto' || '--initial' }}
-      macCodesign: ${{ matrix.target == 'macArm64' && '1' || '0' }}
+      macCodesign: ${{ matrix.target == 'macArm64' && secrets.MACOS_CERTIFICATE_BASE64 != '' && secrets.MACOS_CERTIFICATE_PASSWORD != '' && secrets.MACOS_NOTARIZATION_KEY_ID != '' && secrets.MACOS_NOTARIZATION_ISSUER_ID != '' && secrets.MACOS_NOTARIZATION_KEY_BASE64 != '' && '1' || '0' }}
+      windowsSignPfxBase64: ${{ secrets.CAREFREE_SIGN_PFX_BASE64 }}
+      windowsSignPassword: ${{ secrets.CAREFREE_SIGN_PASSWORD }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -132,7 +140,7 @@ jobs:
           ref: ${{ matrix.target == 'macArm64' && github.sha || needs.prepare.outputs.commit }}
           persist-credentials: false
       - name: 校验签名来源
-        if: matrix.target == 'macArm64'
+        if: matrix.target == 'macArm64' && env.macCodesign == '1'
         env:
           buildCommit: ${{ needs.prepare.outputs.commit }}
         run: |
@@ -182,11 +190,23 @@ jobs:
           }
           if (!(Test-Path -LiteralPath $nsisPath)) { throw '找不到 makensis.exe' }
           "NSIS_PATH=$nsisPath" >> $env:GITHUB_ENV
+      - name: 准备 Windows 签名证书
+        if: matrix.target == 'windowsX64' && env.windowsSignPfxBase64 != ''
+        shell: pwsh
+        run: |
+          $pfxPath = Join-Path $env:RUNNER_TEMP 'carefreeSign.pfx'
+          [IO.File]::WriteAllBytes($pfxPath, [Convert]::FromBase64String($env:windowsSignPfxBase64))
+          "CAREFREE_SIGN_PFX=$pfxPath" >> $env:GITHUB_ENV
+          "CAREFREE_SIGN_PASSWORD=$env:windowsSignPassword" >> $env:GITHUB_ENV
       - name: 构建 Windows 安装包及更新文件
         if: matrix.target == 'windowsX64'
         # ACT: 使用原生环境，避免 Git Bash 的 GNU tar 将 Windows 盘符识别为远程主机。
         shell: pwsh
         run: bun run release:desktop "$env:appVersion" "$env:releaseMode"
+      - name: 清理 Windows 签名证书
+        if: always() && matrix.target == 'windowsX64'
+        shell: pwsh
+        run: Remove-Item -LiteralPath (Join-Path $env:RUNNER_TEMP 'carefreeSign.pfx') -Force -ErrorAction SilentlyContinue
       - name: 准备 Android Bun、GeckoView 与构建依赖
         if: matrix.target == 'androidArm64'
         shell: pwsh
@@ -198,7 +218,7 @@ jobs:
           androidRelease: ${{ inputs.androidRelease && '1' || '0' }}
         run: bun run --cwd apps/mobile build
       - name: 准备 ARM 签名与公证凭据
-        if: matrix.target == 'macArm64'
+        if: matrix.target == 'macArm64' && env.macCodesign == '1'
         id: signing
         env:
           certificateBase64: ${{ secrets.MACOS_CERTIFICATE_BASE64 }}
@@ -250,7 +270,7 @@ jobs:
           printf 'identity=%s\n' "$identity" >> "$GITHUB_OUTPUT"
           printf 'notarizationKeyPath=%s\n' "$notarizationKeyPath" >> "$GITHUB_OUTPUT"
       - name: 为 Apple 公证票据网络错误启用有限重试
-        if: matrix.target == 'macArm64'
+        if: matrix.target == 'macArm64' && env.macCodesign == '1'
         run: |
           bun -e '
           import { chmodSync, mkdirSync, readFileSync, writeFileSync } from "@toonflow/file";
