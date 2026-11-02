@@ -81,6 +81,23 @@ bun run dev
 
 打开 `http://localhost:5173`。独立 Server 默认监听 `3000`，Web 开发服务会代理 API 请求。`dev` 不会自动构建或同步插件，因此首次启动需要上面的 `dev:plugins` 步骤。
 
+### 本地语音合成
+
+媒体模型内置“本地语音合成（OpenAI 兼容）”，请求固定发往 `{API 地址}/audio/speech`，配音不经过中转平台。以 [Kokoro-FastAPI](https://github.com/remsky/Kokoro-FastAPI) 为例：
+
+```sh
+# CPU 版本；有 NVIDIA GPU 时改用 ghcr.io/remsky/kokoro-fastapi-gpu:latest
+docker run --rm -p 8880:8880 ghcr.io/remsky/kokoro-fastapi-cpu:latest
+
+# 先确认服务可合成音频
+curl -X POST http://127.0.0.1:8880/v1/audio/speech \
+  -H "Content-Type: application/json" \
+  -d '{"model":"tts-1","input":"你好，这是本地语音合成测试。","voice":"zm_yunxi","response_format":"wav"}' \
+  --output speech.wav
+```
+
+在“设置 → 媒体模型 → 添加供应商”选择“本地语音合成”，API 地址填 `http://127.0.0.1:8880/v1`，模型名保持 `tts-1`。添加后模型列表会出现“本地语音合成”。音频节点中可填音色（如 `zm_yunxi`、`af_heart`）、语速和输出格式；语种与采样率由服务端按音色决定。Fish Speech、CosyVoice、IndexTTS 等服务使用各自的 OpenAI 兼容地址，需包含 `/v1`。
+
 ### 常用命令
 
 以下命令在仓库根目录执行：
