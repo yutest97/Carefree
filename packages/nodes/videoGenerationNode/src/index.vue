@@ -79,6 +79,7 @@
             v-model:ratio="data.ratio"
             v-model:mode="data.mode"
             v-model:generateAudio="data.generateAudio"
+            v-model:seed="data.seed"
             v-model:other="data.other"
             :ratios="ratioOptions"
             :model="selectedModel"
@@ -132,7 +133,7 @@ const { id, node, nodeProps, nodeEvent, outputs, files, ai, updateNodeInternals 
   label: "视频生成",
 });
 type PromptModel = NonNullable<InstanceType<typeof promptInput>["$props"]["modelValue"]>;
-const data = computed(() => node.data as { prompt: string; promptModel: PromptModel; model: string; duration?: number; resolution: string; ratio: string; mode: string; generateAudio: boolean; other: Record<string, unknown> });
+const data = computed(() => node.data as { prompt: string; promptModel: PromptModel; model: string; duration?: number; resolution: string; ratio: string; mode: string; generateAudio: boolean; seed?: number; other: Record<string, unknown> });
 data.value.prompt ??= "";
 data.value.promptModel ??= [];
 data.value.model ??= "";
@@ -247,6 +248,8 @@ function getGenerationInput(prompt: string): Omit<NodeVideoRequest, "directory">
   });
   const firstFrame = frameMode.value && (selectedMode.value !== "startFrameOptional" || images.length > 1) ? images[0] : undefined;
   const lastFrame = frameMode.value ? images[selectedMode.value === "startFrameOptional" && images.length === 1 ? 0 : 1] : undefined;
+  const other = { ...data.value.other };
+  if (typeof data.value.seed === "number" && Number.isSafeInteger(data.value.seed)) other.seed = data.value.seed;
   return {
     providerId: choice.providerId,
     modelId: choice.modelId,
@@ -256,7 +259,7 @@ function getGenerationInput(prompt: string): Omit<NodeVideoRequest, "directory">
     resolution: data.value.resolution || undefined,
     ratio: data.value.ratio,
     generateAudio: choice.audio === "optional" ? data.value.generateAudio : choice.audio,
-    other: Object.keys(data.value.other).length ? { ...data.value.other } : undefined,
+    other: Object.keys(other).length ? other : undefined,
     outputDirectory: `assets/${id}`,
     images: frameMode.value ? undefined : images,
     firstFrame,
@@ -413,6 +416,7 @@ function getConfig() {
       ratio: data.value.ratio,
       mode: selectedMode.value,
       generateAudio: data.value.generateAudio,
+      seed: data.value.seed,
       other: data.value.other,
     },
     models: models.value,
@@ -435,7 +439,7 @@ nodeTools.register({
 
 nodeTools.register({
   name: "setConfig",
-  description: "修改此视频生成节点的模型、时长、分辨率、比例、模式或声音；先用 getConfig 查询能力，providerId 与 modelId 必须同时提供；mode 使用返回的原始字符串或数组，须匹配当前引用；不修改提示词、不启动生成",
+  description: "修改此视频生成节点的模型、时长、分辨率、比例、模式、声音或固定种子；先用 getConfig 查询能力，providerId 与 modelId 必须同时提供；mode 使用返回的原始字符串或数组，须匹配当前引用；不修改提示词、不启动生成",
   parameters: z.strictObject({
     providerId: z.string().min(1).optional(),
     modelId: z.string().min(1).optional(),
@@ -444,6 +448,7 @@ nodeTools.register({
     ratio: z.enum(ratioOptions).optional(),
     mode: z.union([z.string().min(1), z.array(z.string().min(1)).min(1)]).optional(),
     generateAudio: z.boolean().optional(),
+    seed: z.number().int().min(0).max(4294967295).optional(),
   }).refine((args) => (args.providerId === undefined) === (args.modelId === undefined), "providerId 与 modelId 必须同时提供"),
   async execute(args, { signal }) {
     signal?.throwIfAborted();
@@ -468,6 +473,7 @@ nodeTools.register({
     if (args.ratio !== undefined) data.value.ratio = args.ratio;
     if (args.mode !== undefined) data.value.mode = JSON.stringify(args.mode);
     if (args.generateAudio !== undefined) data.value.generateAudio = args.generateAudio;
+    if (args.seed !== undefined) data.value.seed = args.seed;
     return getConfig();
   },
 });

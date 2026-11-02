@@ -39,6 +39,16 @@
         <span class="sectionLabel">生成音频</span>
         <el-switch v-model="generateAudio" :disabled="disabled" aria-label="生成音频" />
       </div>
+      <div class="sectionLabel">固定种子</div>
+      <el-input-number
+        v-model="seed"
+        class="seedInput"
+        :min="0"
+        :max="4294967295"
+        :controls="false"
+        :disabled="disabled"
+        placeholder="留空为随机" />
+      <div class="seedHint">仅 ComfyUI 生效；配合参考图可复现同一片段</div>
       <modelForm v-model="other" :rules="model?.rules" :disabled="disabled" />
     </div>
   </el-popover>
@@ -46,7 +56,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { ElButton, ElPopover, ElSelect, ElOption, ElSwitch } from "element-plus";
+import { ElButton, ElInputNumber, ElPopover, ElSelect, ElOption, ElSwitch } from "element-plus";
 import { IconChevronDown, IconChevronUp } from "@tabler/icons-vue";
 import type { NodeMediaModel } from "@toonflow/nodes-scaffold/runtime";
 import modelForm from "@toonflow/node-shared/modelForm";
@@ -58,6 +68,7 @@ const resolution = defineModel<string>("resolution", { required: true });
 const ratio = defineModel<string>("ratio", { required: true });
 const mode = defineModel<string>("mode", { required: true });
 const generateAudio = defineModel<boolean>("generateAudio", { required: true });
+const seed = defineModel<number | undefined>("seed");
 const other = defineModel<Record<string, unknown>>("other", { required: true });
 const modeLabels: Record<string, string> = {
   text: "文生视频", singleImage: "单图参考", startEndRequired: "首尾帧必填", endFrameOptional: "尾帧可选", startFrameOptional: "首帧可选",
@@ -92,6 +103,17 @@ function ratioStyle(value: string) {
 .settingsButton {
   flex-shrink: 0;
   :deep(> span) { gap: 6px; }
+}
+
+.seedInput {
+  width: 100%;
+}
+
+.seedHint {
+  margin-top: 6px;
+  margin-bottom: 12px;
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
 }
 
 .generationSettings {

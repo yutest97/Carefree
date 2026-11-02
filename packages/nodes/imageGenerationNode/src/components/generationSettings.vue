@@ -28,6 +28,16 @@
           </span>
         </el-button>
       </div>
+      <div class="sectionLabel">固定种子</div>
+      <el-input-number
+        v-model="seed"
+        class="seedInput"
+        :min="0"
+        :max="4294967295"
+        :controls="false"
+        :disabled="disabled"
+        placeholder="留空为随机" />
+      <div class="seedHint">仅 ComfyUI 生效；配合角色卡可复现同一构图</div>
       <modelForm v-model="other" :rules="model?.rules" :disabled="disabled" />
     </div>
   </el-popover>
@@ -35,7 +45,7 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
-import { ElButton, ElPopover, ElRadioGroup, ElRadioButton } from "element-plus";
+import { ElButton, ElInputNumber, ElPopover, ElRadioGroup, ElRadioButton } from "element-plus";
 import { IconChevronDown, IconChevronUp } from "@tabler/icons-vue";
 import type { NodeMediaModel } from "@toonflow/nodes-scaffold/runtime";
 import modelForm from "@toonflow/node-shared/modelForm";
@@ -44,6 +54,7 @@ defineProps<{ sizes: string[]; ratios: string[]; model?: NodeMediaModel; disable
 const settingsVisible = ref(false);
 const size = defineModel<string>("size", { required: true });
 const ratio = defineModel<string>("ratio", { required: true });
+const seed = defineModel<number | undefined>("seed");
 const other = defineModel<Record<string, unknown>>("other", { required: true });
 
 function ratioStyle(value: string) {
@@ -64,6 +75,17 @@ function ratioStyle(value: string) {
 .settingsButton {
   flex-shrink: 0;
   :deep(> span) { gap: 6px; }
+}
+
+.seedInput {
+  width: 100%;
+}
+
+.seedHint {
+  margin-top: 6px;
+  margin-bottom: 12px;
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
 }
 
 .generationSettings {

@@ -79,6 +79,7 @@
             v-if="editor?.mode !== 'inpaint'"
             v-model:size="data.size"
             v-model:ratio="data.ratio"
+            v-model:seed="data.seed"
             v-model:other="data.other"
             :model="selectedModel"
             :sizes="sizeOptions"
@@ -146,7 +147,7 @@ const { id, node, nodeProps, nodeEvent, outputs, files, ai, updateNodeInternals 
   label: "图片生成",
 });
 type PromptModel = NonNullable<InstanceType<typeof promptInput>["$props"]["modelValue"]>;
-const data = computed(() => node.data as { prompt: string; promptModel: PromptModel; inpaintPrompt: string; inpaintPromptModel: PromptModel; model: string; size: string; ratio: string; other: Record<string, unknown>; inpaint?: ImageInpaint });
+const data = computed(() => node.data as { prompt: string; promptModel: PromptModel; inpaintPrompt: string; inpaintPromptModel: PromptModel; model: string; size: string; ratio: string; seed?: number; other: Record<string, unknown>; inpaint?: ImageInpaint });
 data.value.prompt ??= "";
 data.value.promptModel ??= [];
 data.value.inpaintPrompt ??= "";
@@ -211,13 +212,15 @@ const generationInput = computed<Omit<NodeImageRequest, "directory"> | undefined
   if (!choice) return;
   const inpaint = data.value.inpaint;
   const references = refList.value.filter(item => !inpaint || item.dataType !== "IMAGE" || item.value?.url !== inpaint.source);
+  const other = { ...data.value.other };
+  if (typeof data.value.seed === "number" && Number.isSafeInteger(data.value.seed)) other.seed = data.value.seed;
   const input = {
     providerId: choice.providerId,
     modelId: choice.modelId,
     prompt: generationPrompt.value,
     size: data.value.size,
     ratio: data.value.ratio,
-    other: Object.keys(data.value.other).length ? { ...data.value.other } : undefined,
+    other: Object.keys(other).length ? other : undefined,
     outputDirectory: `assets/${id}`,
     images: references.flatMap(item => item.dataType === "IMAGE" && item.value ? [{ path: item.value.url, mimeType: item.value.mimeType }] : []),
   };
@@ -417,6 +420,7 @@ function getConfig() {
       modelId: selectedModel.value?.modelId ?? "",
       size: data.value.size,
       ratio: data.value.ratio,
+      seed: data.value.seed,
       other: { ...data.value.other },
     },
     models: models.value,
@@ -437,12 +441,13 @@ nodeTools.register({
 
 nodeTools.register({
   name: "setConfig",
-  description: "修改此图片生成节点的模型、分辨率或比例；先用 getConfig 查询可选能力，providerId 与 modelId 必须同时提供；不修改提示词、不启动生成",
+  description: "修改此图片生成节点的模型、分辨率、比例或固定种子；先用 getConfig 查询可选能力，providerId 与 modelId 必须同时提供；不修改提示词、不启动生成",
   parameters: z.strictObject({
     providerId: z.string().min(1).optional(),
     modelId: z.string().min(1).optional(),
     size: z.string().min(1).optional(),
     ratio: z.string().min(1).optional(),
+    seed: z.number().int().min(0).max(4294967295).optional(),
   }).refine((args) => (args.providerId === undefined) === (args.modelId === undefined), "providerId 与 modelId 必须同时提供"),
   async execute(args, { signal }) {
     signal?.throwIfAborted();
@@ -460,6 +465,7 @@ nodeTools.register({
     data.value.model = JSON.stringify([choice.providerId, choice.modelId]);
     if (args.size !== undefined) data.value.size = args.size;
     if (args.ratio !== undefined) data.value.ratio = args.ratio;
+    if (args.seed !== undefined) data.value.seed = args.seed;
     return getConfig();
   },
 });

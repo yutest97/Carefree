@@ -138,6 +138,12 @@ function positiveInteger(value: unknown, fallback: number) {
   return Number.isSafeInteger(number) && number > 0 ? number : fallback;
 }
 
+function resolveSeed(value: unknown) {
+  if (value === undefined || value === null || value === "") return Math.floor(Math.random() * 4294967296);
+  const seed = Number(value);
+  return Number.isSafeInteger(seed) && seed >= 0 && seed <= 4294967295 ? seed : Math.floor(Math.random() * 4294967296);
+}
+
 function extensionOf(mimeType?: string) {
   if (/jpe?g/i.test(mimeType ?? "")) return ".jpg";
   if (/webp/i.test(mimeType ?? "")) return ".webp";
@@ -319,7 +325,7 @@ export default {
 | --- | --- |
 | \`__PROMPT__\` | 正向提示词 |
 | \`__NEGATIVE_PROMPT__\` | 负面提示词 |
-| \`__SEED__\` | 随机种子 |
+| \`__SEED__\` | 种子；图片或视频生成节点设置「固定种子」后使用该值，否则随机 |
 | \`__WIDTH__\` / \`__HEIGHT__\` | 画面宽高 |
 | \`__BATCH__\` | 图片生成数量 |
 | \`__FRAMES__\` / \`__FPS__\` / \`__DURATION__\` | 视频帧数、帧率、时长（秒） |
@@ -331,6 +337,15 @@ export default {
 占位符放在字符串里需要保留引号，例如 \`"text": "__PROMPT__"\`；放在数字位置则不加引号，例如 \`"seed": __SEED__\`。
 
 图生图需要在工作流里加一个 \`LoadImage\` 节点，并把它的 \`image\` 值写成 \`"__IMAGE__"\`；参考图会先上传到 ComfyUI 的 input 目录再替换成文件名。SVD 等工作流用 \`__IMAGE__\` 或 \`__FIRST_FRAME__\` 接收起始图。
+
+### 角色一致性（IP-Adapter）
+
+1. 在 ComfyUI 安装 IP-Adapter 及对应模型，搭好「LoadImage → IP-Adapter 应用节点 → KSampler」链路，图中还可以保留 \`__PROMPT__\` 与 \`__SEED__\`。
+2. 把 LoadImage 的 \`image\` 写成 \`"__IMAGE_0__"\`；若需要多张参考图，依次写 \`"__IMAGE_1__"\`、\`"__IMAGE_2__"\`，模型节点上的 IP-Adapter 权重分别设置。
+3. 保存 API 格式 JSON 粘贴到「图像工作流」，再把角色卡节点的两个输出接到图片生成节点的输入。
+4. 给图片生成节点设置「固定种子」后，同一角色卡、提示词与参考图可复现同一构图，便于逐帧调整动作与表情。
+
+角色卡负责固定五官、发型、服装描述和多张参考图；IP-Adapter 负责把这些参考图的视觉特征压进采样，两者配合比单独用提示词更稳。
 
 视频输出支持 \`SaveVideo\` / \`VHS_VideoCombine\`，返回 mp4、webm、mkv、mov 等格式；图片节点需为 \`SaveImage\`。
 
@@ -371,7 +386,7 @@ export default {
     const uploaded = await Promise.all(references.map(input => uploadImage(this.tool.fetch, baseUrl, input, signal)));
     const maskName = request.mask ? await uploadImage(this.tool.fetch, baseUrl, request.mask, signal) : "";
     const values: Record<string, string | number> = {
-      SEED: Math.floor(Math.random() * 4294967296),
+      SEED: resolveSeed(request.other?.seed),
       WIDTH: width,
       HEIGHT: height,
       BATCH: count,
@@ -409,7 +424,7 @@ export default {
     const firstFrame = request.firstFrame ? await uploadImage(this.tool.fetch, baseUrl, request.firstFrame, signal) : "";
     const lastFrame = request.lastFrame ? await uploadImage(this.tool.fetch, baseUrl, request.lastFrame, signal) : "";
     const values: Record<string, string | number> = {
-      SEED: Math.floor(Math.random() * 4294967296),
+      SEED: resolveSeed(request.other?.seed),
       WIDTH: width,
       HEIGHT: height,
       FRAMES: frames,

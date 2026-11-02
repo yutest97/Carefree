@@ -72,7 +72,10 @@
         <div class="actions">
           <el-button size="small" type="primary" :loading="saving" :disabled="!data.name.trim()" @click="saveCharacter">保存到素材库</el-button>
           <el-button v-if="data.characterPath" size="small" type="danger" plain :disabled="saving" @click="deleteCharacter">删除角色</el-button>
+          <el-button size="small" :disabled="!data.characterPath || saving" @click="exportCharacterPack">导出</el-button>
+          <el-button size="small" :disabled="saving || uploading" @click="packInput?.click()">导入</el-button>
           <span v-if="data.characterPath" class="savedPath">{{ data.characterPath }}</span>
+          <input ref="packInput" type="file" accept=".json,application/json" hidden @change="importCharacterPack" />
         </div>
       </el-card>
     </template>
@@ -135,6 +138,7 @@ const loadingList = ref(false);
 const uploading = ref(false);
 const saving = ref(false);
 const fileInput = ref<HTMLInputElement>();
+const packInput = ref<HTMLInputElement>();
 
 const connectedImages = computed(() => refList.value.filter(item => item.dataType === "IMAGE" && item.value)
   .map(item => item.value as NodeMediaValue));
@@ -258,6 +262,92 @@ function removeReferenceAt(index: number) {
   data.value.references = (data.value.references ?? []).filter((_, itemIndex) => itemIndex !== index);
 }
 
+function createCharacterId() {
+  return `character-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+}
+
+function blobToDataUrl(blob: Blob) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error ?? new Error("参考图读取失败"));
+    reader.readAsDataURL(blob);
+  });
+}
+
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
+async function exportCharacterPack() {
+  const path = data.value.characterPath;
+  if (!path || saving.value) return;
+  if (!/^characters\/[^/]+\.json$/.test(path)) return void ElMessage.error("请先把角色保存到素材库");
+  saving.value = true;
+  try {
+    const record = await readCharacter(path);
+    const references: { mimeType: string; data: string }[] = [];
+    for (const item of record.references) {
+      const { blob, mimeType } = await readAsset(item.path);
+      references.push({ mimeType: item.mimeType || mimeType, data: await blobToDataUrl(blob) });
+    }
+    const pack = { carefreeCharacter: 1, ...record, references };
+    const blob = new Blob([JSON.stringify(pack, null, 2)], { type: "application/json" });
+    const filename = (record.name || "character").replace(/[\\/:*?"<>|]/g, "_").trim() || "character";
+    downloadBlob(blob, `${filename}.carefree-character.json`);
+    ElMessage.success(`角色包已导出，含 ${references.length} 张参考图`);
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : "角色包导出失败");
+  } finally {
+    saving.value = false;
+  }
+}
+
+async function importCharacterPack(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  input.value = "";
+  if (!file || saving.value || uploading.value) return;
+  if (!/\.json$/i.test(file.name)) return void ElMessage.error("请选择角色包 JSON 文件");
+  saving.value = true;
+  try {
+    const pack = JSON.parse(await file.text()) as Record<string, unknown> | null;
+    if (!pack || typeof pack !== "object" || pack.carefreeCharacter !== 1) throw new Error("不是 Carefree 角色包");
+    const record = normalizeCharacter(pack, "");
+    if (!record.name.trim()) throw new Error("角色包缺少角色名");
+    if (!node.id || /[\\/]/.test(node.id) || node.id === "." || node.id === "..") throw new Error("节点 ID 不能作为文件夹名称");
+    const characterId = createCharacterId();
+    const references: CharacterReference[] = [];
+    const items = Array.isArray(pack.references) ? pack.references : [];
+    await ensureAssetDirectory("characters");
+    await ensureAssetDirectory(`characters/${characterId}`);
+    for (const [index, value] of items.entries()) {
+      const item = value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+      if (typeof item.data !== "string" || !/^data:image\/[a-z0-9.+-]+;base64,/i.test(item.data)) continue;
+      const blob = await (await fetch(item.data)).blob();
+      if (!blob.size || blob.size > 100 * 1024 * 1024) throw new Error(`第 ${index + 1} 张参考图无效或超过 100 MB`);
+      const mimeType = /^image\//i.test(blob.type) ? blob.type : typeof item.mimeType === "string" && /^image\//i.test(item.mimeType) ? item.mimeType : "image/png";
+      const target = `characters/${characterId}/ref-${index}${extensionForMimeType(mimeType)}`;
+      await saveAsset(target, new Blob([await blob.arrayBuffer()], { type: mimeType }), true);
+      references.push({ path: target, mimeType });
+    }
+    const saved = normalizeCharacter({ ...pack, version: 1, references, updatedAt: new Date().toISOString() }, `characters/${characterId}.json`);
+    await saveAsset(`characters/${characterId}.json`, new Blob([JSON.stringify(saved, null, 2)], { type: "application/json" }), true);
+    await refreshCharacters();
+    await chooseCharacter(`characters/${characterId}.json`);
+    ElMessage.success(`已导入角色「${saved.name}」，含 ${references.length} 张参考图`);
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : "角色包导入失败");
+  } finally {
+    saving.value = false;
+  }
+}
+
 async function saveCharacter() {
   if (saving.value) return;
   const name = data.value.name.trim();
@@ -266,7 +356,7 @@ async function saveCharacter() {
   try {
     if (!node.id || /[\\/]/.test(node.id) || node.id === "." || node.id === "..") throw new Error("节点 ID 不能作为文件夹名称");
     const existing = data.value.characterPath.match(/^characters\/([^/]+)\.json$/)?.[1];
-    const characterId = existing ?? `character-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+    const characterId = existing ?? createCharacterId();
     const workspace = files.getWorkspaceFiles();
     const sources = [...connectedImages.value.map(item => ({ path: item.url, mimeType: item.mimeType })), ...(data.value.references ?? [])]
       .filter((item, index, list) => list.findIndex(candidate => candidate.path === item.path) === index);
