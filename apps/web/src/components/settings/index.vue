@@ -52,6 +52,7 @@ import {
   IconUserCog,
   IconSubtitlesAi,
   IconNetwork,
+  IconUsers,
 } from "@tabler/icons-vue";
 
 const settingsPanels = [
@@ -65,6 +66,7 @@ const settingsPanels = [
     component: defineAsyncComponent(() => import("./panels/languageModel/index.vue")),
   },
   { id: "mediaModel", label: "媒体模型", icon: IconPhotoVideo, component: defineAsyncComponent(() => import("./panels/mediaModel/index.vue")) },
+  { id: "characterLibrary", label: "角色库", icon: IconUsers, groupLabel: "素材", component: defineAsyncComponent(() => import("./panels/characterLibrary.vue")) },
   { id: "mcp", label: "MCP", icon: IconPlugConnected, groupLabel: "通讯", component: defineAsyncComponent(() => import("./panels/mcp/index.vue")) },
   { id: "network", label: "网络设置", icon: IconNetwork, component: defineAsyncComponent(() => import("./panels/network.vue")) },
   {
