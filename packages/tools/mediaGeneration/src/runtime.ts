@@ -60,3 +60,37 @@ export const audioGenerationSchema = z.strictObject({
   format: z.string().trim().min(1).max(64).optional(),
   sampleRate: z.number().int().positive().optional(),
 });
+/** 批量生成共用一组参考素材，按提示词顺序逐个执行；单项失败不中断后续项。 */
+export const batchGenerationSchema = z.strictObject({
+  type: z.enum(["image", "video", "audio"]),
+  providerId: sharedFields.providerId,
+  modelId: sharedFields.modelId,
+  prompts: z.array(z.string().trim().min(1).max(100000)).min(1).max(50),
+  other: sharedFields.other,
+  outputDirectory: sharedFields.outputDirectory,
+  images: sharedFields.images,
+  videos: z.array(videoReference).max(64).optional(),
+  audios: z.array(audioReference).max(64).optional(),
+  firstFrame: imageReference.optional(),
+  lastFrame: imageReference.optional(),
+  referenceOrder: z.array(z.union([
+    z.strictObject({ type: z.enum(["image", "video", "audio"]), index: z.number().int().min(0).max(63) }),
+    z.strictObject({ type: z.enum(["firstFrame", "lastFrame", "text"]) }),
+  ])).max(256).optional(),
+  ratio: sharedFields.ratio,
+  size: z.string().trim().min(1).max(64).optional(),
+  resolution: z.string().trim().min(1).max(64).optional(),
+  duration: z.number().finite().positive().max(3600).optional(),
+  generateAudio: z.boolean().optional(),
+  mode: z.union([
+    z.enum(["singleImage", "startEndRequired", "endFrameOptional", "startFrameOptional", "text"]),
+    z.array(referenceMode).min(1).max(3),
+  ]).optional(),
+  voice: z.string().trim().min(1).max(256).optional(),
+  speed: z.number().finite().positive().optional(),
+  volume: z.number().finite().optional(),
+  pitch: z.number().finite().optional(),
+  language: z.string().trim().min(1).max(64).optional(),
+  format: z.string().trim().min(1).max(64).optional(),
+  sampleRate: z.number().int().positive().optional(),
+});

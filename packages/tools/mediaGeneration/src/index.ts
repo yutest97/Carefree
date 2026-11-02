@@ -1,12 +1,26 @@
 import { z } from "zod";
-import type { ToolDefinition, ToolPlugin } from "@toonflow/tools-scaffold/runtime";
-import { audioGenerationSchema, imageGenerationSchema, listMediaModelsSchema, videoGenerationSchema } from "./runtime";
+import type { GeneratedMedia, ToolDefinition, ToolPlugin } from "@toonflow/tools-scaffold/runtime";
+import { audioGenerationSchema, batchGenerationSchema, imageGenerationSchema, listMediaModelsSchema, videoGenerationSchema } from "./runtime";
 
 const configSchema = z.strictObject({
   allowImage: z.boolean().default(true),
   allowVideo: z.boolean().default(true),
   allowAudio: z.boolean().default(true),
 });
+
+function previewText(assets: GeneratedMedia[]) {
+  return assets.map(asset => {
+    const url = asset.path.replaceAll("\\", "/").split("/").map(encodeURIComponent).join("/");
+    const preview = asset.mediaType === "image" ? `![生成图片](<${url}>)` : `[${asset.mediaType === "audio" ? "播放生成音频" : "查看生成视频"}](<${url}>)`;
+    return `${preview}\n工作区文件：${asset.path}`;
+  }).join("\n\n");
+}
+
+function shortPrompt(prompt: string) {
+  return prompt.length > 60 ? `${prompt.slice(0, 60)}…` : prompt;
+}
+
+type BatchResult = { index: number; prompt: string; status: "success" | "failed"; assets: GeneratedMedia[]; error?: string };
 
 const plugin: ToolPlugin = {
   validateConfig: config => configSchema.parse(config),
@@ -31,6 +45,42 @@ const plugin: ToolPlugin = {
         return { content: [{ type: "text", text: JSON.stringify(result) }], details: result };
       },
     };
+    const batchTool: ToolDefinition = {
+      name: "generateMediaBatch",
+      label: "批量生成媒体",
+      description: "用同一个模型和同一组参考素材，按顺序为多个提示词批量生成图片、视频或音频。单项失败不会中断后续项，逐项返回文件或失败原因。providerId 和 modelId 必须来自 listMediaModels。",
+      promptSnippet: "需要连续生成多个分镜或同一角色的多张图片时，先查询 listMediaModels，再用 prompts 数组批量提交。",
+      parameters: z.toJSONSchema(batchGenerationSchema, { io: "input", target: "draft-07" }),
+      executionMode: "sequential",
+      async execute(_id, params, signal) {
+        const { type, prompts, ...shared } = batchGenerationSchema.parse(params);
+        signal?.throwIfAborted();
+        if (!generationTools.some(operation => operation.mediaType === type)) {
+          throw new Error(`当前配置不允许生成${type === "image" ? "图片" : type === "video" ? "视频" : "音频"}`);
+        }
+        const generate = type === "image" ? media.generateImage : type === "video" ? media.generateVideo : media.generateAudio;
+        const results: BatchResult[] = [];
+        for (const [index, prompt] of prompts.entries()) {
+          if (signal?.aborted) {
+            results.push({ index, prompt, status: "failed", assets: [], error: "已取消" });
+            continue;
+          }
+          try {
+            const assets = await generate({ ...shared, prompt }, signal);
+            results.push({ index, prompt, status: "success", assets });
+          } catch (error) {
+            results.push({ index, prompt, status: "failed", assets: [], error: error instanceof Error ? error.message : String(error) });
+          }
+        }
+        const succeeded = results.filter(result => result.status === "success").length;
+        const details = { total: results.length, succeeded, failed: results.length - succeeded, results };
+        const lines = results.map(result => result.status === "success"
+          ? `${result.index + 1}. ${shortPrompt(result.prompt)}\n${previewText(result.assets)}`
+          : `${result.index + 1}. ${shortPrompt(result.prompt)}\n失败：${result.error}`);
+        const text = `批量${type === "image" ? "图片" : type === "video" ? "视频" : "音频"}生成完成：成功 ${succeeded} 项，失败 ${results.length - succeeded} 项。\n\n${lines.join("\n\n")}`;
+        return { content: [{ type: "text", text }], details };
+      },
+    };
     return [listTool, ...generationTools.map<ToolDefinition>(operation => ({
       name: operation.name,
       label: operation.label,
@@ -41,14 +91,9 @@ const plugin: ToolPlugin = {
       async execute(_id, params, signal) {
         signal?.throwIfAborted();
         const result = await media[operation.name](operation.parameters.parse(params), signal);
-        const text = result.map(asset => {
-          const url = asset.path.replaceAll("\\", "/").split("/").map(encodeURIComponent).join("/");
-          const preview = asset.mediaType === "image" ? `![生成图片](<${url}>)` : `[${asset.mediaType === "audio" ? "播放生成音频" : "查看生成视频"}](<${url}>)`;
-          return `${preview}\n工作区文件：${asset.path}`;
-        }).join("\n\n");
-        return { content: [{ type: "text", text }], details: result };
+        return { content: [{ type: "text", text: previewText(result) }], details: result };
       },
-    }))];
+    })), batchTool];
   },
 };
 
