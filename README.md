@@ -86,6 +86,15 @@ Windows 安装包默认不签名。发布前设置以下环境变量后，`bun r
 
 需要 Windows x64 环境与 Windows SDK。应用主程序位于增量更新 tar 内，不在本次签名范围；若需签名，应先签名应用文件再重新生成 tar 与更新清单。
 
+GitHub Actions 中改用仓库 Secrets 提供证书，配置后 Windows 构建会自动签名并验签：
+
+| Secret | 说明 |
+| --- | --- |
+| `CAREFREE_SIGN_PFX_BASE64` | `.pfx` 证书文件的 Base64 文本；未配置时 CI 跳过签名 |
+| `CAREFREE_SIGN_PASSWORD` | PFX 导出密码，未加密时留空 |
+
+证书只在构建步骤临时落盘，任务结束即清理。时间戳地址可通过 `CAREFREE_SIGN_TIMESTAMP_URL` 环境变量覆盖。
+
 ### 服务端
 
 ```sh
