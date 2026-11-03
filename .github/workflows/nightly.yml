@@ -1,0 +1,77 @@
+name: Nightly build
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: carefree-nightly
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: 构建 Windows Nightly
+    uses: ./.github/workflows/debug.yml
+    with:
+      target: windowsX64
+      generatePatch: false
+      androidRelease: false
+      allowBranch: true
+    secrets: inherit
+
+  release:
+    name: 更新 Nightly 预发布
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      releaseVersion: ${{ needs.build.outputs.version }}
+      buildCommit: ${{ needs.build.outputs.commit }}
+    steps:
+      - name: 下载 Windows 产物
+        uses: actions/download-artifact@v8
+        with:
+          pattern: carefree-${{ needs.build.outputs.version }}-windowsX64
+          path: artifacts
+          merge-multiple: true
+      - name: 生成 Nightly 说明
+        run: |
+          node --input-type=module <<'JS'
+          import { writeFileSync } from "node:fs";
+
+          const base = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}`;
+          const version = process.env.releaseVersion;
+          const commit = process.env.buildCommit;
+          writeFileSync("nightlyBody.md", [
+            "## 🌙 Nightly 预发布",
+            "",
+            "由 `main` 分支最新提交自动构建，仅提供 Windows 安装包。",
+            "",
+            `- 构建提交：[\`${commit.slice(0, 7)}\`](${base}/commit/${commit})`,
+            `- 应用版本：\`${version}\``,
+            "",
+            `[⬇️ 下载 Windows 安装包](${base}/releases/download/nightly/carefree-${version}-Setup.exe)`,
+            "",
+            `> 此版本可能不稳定，正式版请查看[最新稳定版本](${base}/releases/latest)。`,
+            "",
+            "其余更新文件供自动更新使用。",
+            "",
+          ].join("\n"));
+          JS
+      - name: 发布或更新 Nightly
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: nightly
+          target_commitish: ${{ needs.build.outputs.commit }}
+          name: Carefree Nightly
+          body_path: nightlyBody.md
+          prerelease: true
+          make_latest: false
+          fail_on_unmatched_files: true
+          files: artifacts/*

@@ -39,6 +39,9 @@ on:
       androidRelease:
         type: boolean
         default: false
+      allowBranch:
+        type: boolean
+        default: false
     secrets:
       MACOS_CERTIFICATE_BASE64:
         description: 包含 Developer ID Application 证书及私钥的 P12 Base64
@@ -121,7 +124,7 @@ jobs:
   build:
     name: 构建 ${{ matrix.target }}
     needs: prepare
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
+    if: github.event_name == 'workflow_dispatch' || inputs.allowBranch || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
     runs-on: ${{ matrix.os }}
     timeout-minutes: 90
     strategy:
